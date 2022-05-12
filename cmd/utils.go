@@ -28,69 +28,71 @@ func scanDirectory(compareType string, compareValue int, directory string) {
 	}
 
 	for _, file := range files {
-		fileName := file.Name()
-		fullPath := filepath.Join(directory, fileName)
+		func() {
+			fileName := file.Name()
+			fullPath := filepath.Join(directory, fileName)
 
-		reader, err := os.Open(fullPath)
-		if err != nil {
-			panic(err)
-		}
-
-		defer func() {
-			err := reader.Close()
+			reader, err := os.Open(fullPath)
 			if err != nil {
 				panic(err)
 			}
+
+			defer func() {
+				err := reader.Close()
+				if err != nil {
+					panic(err)
+				}
+			}()
+
+			myImage, _, err := image.DecodeConfig(reader)
+			if errors.Is(err, image.ErrFormat) == true {
+				return
+			} else if err != nil {
+				panic(err)
+			}
+
+			if Verbose && OrEqual {
+				if compareType == "wider-than" && myImage.Width >= compareValue {
+					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+				} else if compareType == "narrower-than" && myImage.Width <= compareValue {
+					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+				} else if compareType == "taller-than" && myImage.Height >= compareValue {
+					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+				} else if compareType == "shorter-than" && myImage.Height <= compareValue {
+					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+				}
+			} else if Verbose && !OrEqual {
+				if compareType == "wider-than" && myImage.Width > compareValue {
+					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+				} else if compareType == "narrower-than" && myImage.Width < compareValue {
+					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+				} else if compareType == "taller-than" && myImage.Height > compareValue {
+					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+				} else if compareType == "shorter-than" && myImage.Height < compareValue {
+					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+				}
+			} else if !Verbose && OrEqual {
+				if compareType == "wider-than" && myImage.Width >= compareValue {
+					fmt.Println(fullPath)
+				} else if compareType == "narrower-than" && myImage.Width <= compareValue {
+					fmt.Println(fullPath)
+				} else if compareType == "taller-than" && myImage.Height >= compareValue {
+					fmt.Println(fullPath)
+				} else if compareType == "shorter-than" && myImage.Height <= compareValue {
+					fmt.Println(fullPath)
+				}
+			} else {
+				if compareType == "wider-than" && myImage.Width > compareValue {
+					fmt.Println(fullPath)
+				} else if compareType == "narrower-than" && myImage.Width < compareValue {
+					fmt.Println(fullPath)
+				} else if compareType == "taller-than" && myImage.Height > compareValue {
+					fmt.Println(fullPath)
+				} else if compareType == "shorter-than" && myImage.Height < compareValue {
+					fmt.Println(fullPath)
+				}
+			}
 		}()
-
-		myImage, _, err := image.DecodeConfig(reader)
-		if errors.Is(err, image.ErrFormat) == true {
-			return
-		} else if err != nil {
-			panic(err)
-		}
-
-		if Verbose && OrEqual {
-			if compareType == "wider-than" && myImage.Width >= compareValue {
-				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-			} else if compareType == "narrower-than" && myImage.Width <= compareValue {
-				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-			} else if compareType == "taller-than" && myImage.Height >= compareValue {
-				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-			} else if compareType == "shorter-than" && myImage.Height <= compareValue {
-				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-			}
-		} else if Verbose && !OrEqual {
-			if compareType == "wider-than" && myImage.Width > compareValue {
-				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-			} else if compareType == "narrower-than" && myImage.Width < compareValue {
-				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-			} else if compareType == "taller-than" && myImage.Height > compareValue {
-				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-			} else if compareType == "shorter-than" && myImage.Height < compareValue {
-				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-			}
-		} else if !Verbose && OrEqual {
-			if compareType == "wider-than" && myImage.Width >= compareValue {
-				fmt.Println(fullPath)
-			} else if compareType == "narrower-than" && myImage.Width <= compareValue {
-				fmt.Println(fullPath)
-			} else if compareType == "taller-than" && myImage.Height >= compareValue {
-				fmt.Println(fullPath)
-			} else if compareType == "shorter-than" && myImage.Height <= compareValue {
-				fmt.Println(fullPath)
-			}
-		} else {
-			if compareType == "wider-than" && myImage.Width > compareValue {
-				fmt.Println(fullPath)
-			} else if compareType == "narrower-than" && myImage.Width < compareValue {
-				fmt.Println(fullPath)
-			} else if compareType == "taller-than" && myImage.Height > compareValue {
-				fmt.Println(fullPath)
-			} else if compareType == "shorter-than" && myImage.Height < compareValue {
-				fmt.Println(fullPath)
-			}
-		}
 	}
 }
 
