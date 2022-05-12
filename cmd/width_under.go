@@ -14,7 +14,7 @@ var width_underCmd = &cobra.Command{
 	Long:  "Display all images under the specified width in the directory or directories provided.",
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		ImageSizes("narrower-than", args)
+		ImageSizes(narrowerthan, args)
 	},
 }
 

@@ -10,13 +10,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Version string = "0.2"
+const (
+	widerthan    int = 1
+	narrowerthan int = 2
+	tallerthan   int = 3
+	shorterthan  int = 4
+)
 
-var Count bool
-var OrEqual bool
-var Quiet bool
-var Recursive bool
-var Verbose bool
+var (
+	Count     bool
+	OrEqual   bool
+	Quiet     bool
+	Recursive bool
+	Verbose   bool
+	Version   string = "0.2"
+)
 
 var rootCmd = &cobra.Command{
 	Use:              "imagesize",
