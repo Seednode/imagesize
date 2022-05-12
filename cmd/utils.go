@@ -19,7 +19,7 @@ import (
 	"sync"
 )
 
-func scanDirectory(compareType string, compareValue int, directory string) {
+func scanDirectory(ch chan<- string, wg *sync.WaitGroup, compareType string, compareValue int, directory string) {
 	files, err := os.ReadDir(directory)
 	if err != nil {
 		panic(err)
@@ -28,10 +28,6 @@ func scanDirectory(compareType string, compareValue int, directory string) {
 	if len(files) == 0 {
 		return
 	}
-
-	ch := make(chan string)
-
-	var wg sync.WaitGroup
 
 	for _, file := range files {
 		wg.Add(1)
@@ -101,6 +97,48 @@ func scanDirectory(compareType string, compareValue int, directory string) {
 			}
 		}(file)
 	}
+}
+
+func ImageSizes(compareType string, arguments []string) {
+	compareValue, err := strconv.Atoi(arguments[0])
+	if err != nil {
+		panic(err)
+	}
+
+	ch := make(chan string)
+
+	var wg sync.WaitGroup
+
+	for dir := 1; dir < len(arguments); dir++ {
+		wg.Add(1)
+
+		a := dir
+		go func() {
+			defer wg.Done()
+
+			if Recursive {
+				directory := arguments[a]
+
+				filesystem := os.DirFS(directory)
+
+				fs.WalkDir(filesystem, ".", func(path string, d fs.DirEntry, err error) error {
+					if d.IsDir() {
+						wg.Add(1)
+						go func() {
+							defer wg.Done()
+
+							fullPath := filepath.Join(directory, path)
+							scanDirectory(ch, &wg, compareType, compareValue, fullPath)
+						}()
+					}
+
+					return nil
+				})
+			} else {
+				scanDirectory(ch, &wg, compareType, compareValue, arguments[a])
+			}
+		}()
+	}
 
 	go func() {
 		wg.Wait()
@@ -113,38 +151,11 @@ func scanDirectory(compareType string, compareValue int, directory string) {
 		outputs = append(outputs, r)
 	}
 
-	sort.Slice(outputs, func(p, q int) bool {
+	sort.SliceStable(outputs, func(p, q int) bool {
 		return outputs[p] < outputs[q]
 	})
 
 	for o := 0; o < len(outputs); o++ {
 		fmt.Printf("%v\n", outputs[o])
-	}
-
-}
-
-func ImageSizes(compareType string, arguments []string) {
-	compareValue, err := strconv.Atoi(arguments[0])
-	if err != nil {
-		panic(err)
-	}
-
-	for dir := 1; dir < len(arguments); dir++ {
-		if Recursive {
-			directory := arguments[dir]
-
-			filesystem := os.DirFS(directory)
-
-			fs.WalkDir(filesystem, ".", func(path string, d fs.DirEntry, err error) error {
-				if d.IsDir() {
-					fullPath := filepath.Join(directory, path)
-					scanDirectory(compareType, compareValue, fullPath)
-				}
-
-				return nil
-			})
-		} else {
-			scanDirectory(compareType, compareValue, arguments[dir])
-		}
 	}
 }
