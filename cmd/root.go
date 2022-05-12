@@ -29,7 +29,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVar(&OrEqual, "or-equal", false, "also match files equal to the provided dimension")
-	rootCmd.PersistentFlags().BoolVarP(&Recursive, "recursive", "r", false, "also check subdirectories")
+	rootCmd.PersistentFlags().BoolVar(&OrEqual, "or-equal", false, "match files equal to the provided dimension")
+	rootCmd.PersistentFlags().BoolVarP(&Recursive, "recursive", "r", false, "include subdirectories")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "display image dimensions in output")
 }
