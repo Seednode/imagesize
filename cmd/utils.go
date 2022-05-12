@@ -19,7 +19,7 @@ import (
 	"sync"
 )
 
-func scanFile(file fs.DirEntry, ch chan<- string, wg *sync.WaitGroup, compareType int, compareValue int, directory string) {
+func scanFile(file fs.DirEntry, ch chan<- string, wg *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) {
 	defer wg.Done()
 
 	fileName := file.Name()
@@ -50,33 +50,33 @@ func scanFile(file fs.DirEntry, ch chan<- string, wg *sync.WaitGroup, compareTyp
 	var output string = ""
 
 	if Verbose && OrEqual {
-		if (compareType == widerthan && width >= compareValue) ||
-			(compareType == narrowerthan && width <= compareValue) ||
-			(compareType == tallerthan && height >= compareValue) ||
-			(compareType == shorterthan && height <= compareValue) {
+		if (comparisonOperator == widerthan && width >= compareValue) ||
+			(comparisonOperator == narrowerthan && width <= compareValue) ||
+			(comparisonOperator == tallerthan && height >= compareValue) ||
+			(comparisonOperator == shorterthan && height <= compareValue) {
 			output = fmt.Sprintf("%v (%dx%d)",
 				fullPath, width, height)
 		}
 	} else if Verbose && !OrEqual {
-		if (compareType == widerthan && width > compareValue) ||
-			(compareType == narrowerthan && width < compareValue) ||
-			(compareType == tallerthan && height > compareValue) ||
-			(compareType == shorterthan && height < compareValue) {
+		if (comparisonOperator == widerthan && width > compareValue) ||
+			(comparisonOperator == narrowerthan && width < compareValue) ||
+			(comparisonOperator == tallerthan && height > compareValue) ||
+			(comparisonOperator == shorterthan && height < compareValue) {
 			output = fmt.Sprintf("%v (%dx%d)",
 				fullPath, width, height)
 		}
 	} else if !Verbose && OrEqual {
-		if (compareType == widerthan && width >= compareValue) ||
-			(compareType == narrowerthan && width <= compareValue) ||
-			(compareType == tallerthan && height >= compareValue) ||
-			(compareType == shorterthan && height <= compareValue) {
+		if (comparisonOperator == widerthan && width >= compareValue) ||
+			(comparisonOperator == narrowerthan && width <= compareValue) ||
+			(comparisonOperator == tallerthan && height >= compareValue) ||
+			(comparisonOperator == shorterthan && height <= compareValue) {
 			output = fmt.Sprintf("%v", fullPath)
 		}
 	} else {
-		if (compareType == widerthan && width > compareValue) ||
-			(compareType == narrowerthan && width < compareValue) ||
-			(compareType == tallerthan && height > compareValue) ||
-			(compareType == shorterthan && height < compareValue) {
+		if (comparisonOperator == widerthan && width > compareValue) ||
+			(comparisonOperator == narrowerthan && width < compareValue) ||
+			(comparisonOperator == tallerthan && height > compareValue) ||
+			(comparisonOperator == shorterthan && height < compareValue) {
 			output = fmt.Sprintf("%v", fullPath)
 		}
 	}
@@ -86,7 +86,7 @@ func scanFile(file fs.DirEntry, ch chan<- string, wg *sync.WaitGroup, compareTyp
 	}
 }
 
-func scanDirectory(ch chan<- string, wg *sync.WaitGroup, compareType int, compareValue int, directory string) {
+func scanDirectory(ch chan<- string, wg *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) {
 	files, err := os.ReadDir(directory)
 	if err != nil {
 		panic(err)
@@ -99,11 +99,11 @@ func scanDirectory(ch chan<- string, wg *sync.WaitGroup, compareType int, compar
 	for _, file := range files {
 		wg.Add(1)
 
-		go scanFile(file, ch, wg, compareType, compareValue, directory)
+		go scanFile(file, ch, wg, comparisonOperator, compareValue, directory)
 	}
 }
 
-func scanDirectories(ch chan<- string, wg *sync.WaitGroup, compareType int, compareValue int, arguments []string, dir int) {
+func scanDirectories(ch chan<- string, wg *sync.WaitGroup, comparisonOperator compareType, compareValue int, arguments []string, dir int) {
 	defer wg.Done()
 
 	if Recursive {
@@ -118,18 +118,18 @@ func scanDirectories(ch chan<- string, wg *sync.WaitGroup, compareType int, comp
 					defer wg.Done()
 
 					fullPath := filepath.Join(directory, path)
-					scanDirectory(ch, wg, compareType, compareValue, fullPath)
+					scanDirectory(ch, wg, comparisonOperator, compareValue, fullPath)
 				}()
 			}
 
 			return nil
 		})
 	} else {
-		scanDirectory(ch, wg, compareType, compareValue, arguments[dir])
+		scanDirectory(ch, wg, comparisonOperator, compareValue, arguments[dir])
 	}
 }
 
-func ImageSizes(compareType int, arguments []string) {
+func ImageSizes(comparisonOperator compareType, arguments []string) {
 	compareValue, err := strconv.Atoi(arguments[0])
 	if err != nil {
 		panic(err)
@@ -142,7 +142,7 @@ func ImageSizes(compareType int, arguments []string) {
 	for dir := 1; dir < len(arguments); dir++ {
 		wg.Add(1)
 
-		go scanDirectories(ch, &wg, compareType, compareValue, arguments, dir)
+		go scanDirectories(ch, &wg, comparisonOperator, compareValue, arguments, dir)
 	}
 
 	go func() {

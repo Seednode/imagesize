@@ -10,11 +10,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type compareType int
+
 const (
-	widerthan    int = 1
-	narrowerthan int = 2
-	tallerthan   int = 3
-	shorterthan  int = 4
+	widerthan compareType = iota
+	narrowerthan
+	tallerthan
+	shorterthan
 )
 
 var (
