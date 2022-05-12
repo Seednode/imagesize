@@ -50,19 +50,19 @@ func scanDirectory(compareType string, compareValue int, directory string) {
 			panic(err)
 		}
 
-		if Verbose {
-			if OrEqual {
-				if compareType == "wider-than" && myImage.Width >= compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-				} else if compareType == "narrower-than" && myImage.Width <= compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-				} else if compareType == "taller-than" && myImage.Height >= compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-				} else if compareType == "shorter-than" && myImage.Height <= compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-				}
-				return
+		if Verbose && OrEqual {
+			if compareType == "wider-than" && myImage.Width >= compareValue {
+				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+			} else if compareType == "narrower-than" && myImage.Width <= compareValue {
+				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+			} else if compareType == "taller-than" && myImage.Height >= compareValue {
+				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+			} else if compareType == "shorter-than" && myImage.Height <= compareValue {
+				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
 			}
+
+			return
+		} else if Verbose && !OrEqual {
 			if compareType == "wider-than" && myImage.Width > compareValue {
 				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
 			} else if compareType == "narrower-than" && myImage.Width < compareValue {
@@ -74,19 +74,7 @@ func scanDirectory(compareType string, compareValue int, directory string) {
 			}
 
 			return
-		}
-
-		if compareType == "wider-than" && myImage.Width > compareValue {
-			fmt.Println(fullPath)
-		} else if compareType == "narrower-than" && myImage.Width < compareValue {
-			fmt.Println(fullPath)
-		} else if compareType == "taller-than" && myImage.Height > compareValue {
-			fmt.Println(fullPath)
-		} else if compareType == "shorter-than" && myImage.Height < compareValue {
-			fmt.Println(fullPath)
-		}
-
-		if OrEqual {
+		} else if !Verbose && OrEqual {
 			if compareType == "wider-than" && myImage.Width >= compareValue {
 				fmt.Println(fullPath)
 			} else if compareType == "narrower-than" && myImage.Width <= compareValue {
