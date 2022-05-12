@@ -10,14 +10,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Version string = "0.1"
+var Version string = "0.2"
 
+var Count bool
 var OrEqual bool
+var Quiet bool
 var Recursive bool
 var Verbose bool
 
 var rootCmd = &cobra.Command{
-	Short:            "Displays images matching specified dimensional constraints.",
+	Use:              "imagesize",
+	Short:            "Displays images matching the specified constraints.",
 	TraverseChildren: true,
 }
 
@@ -29,7 +32,9 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.PersistentFlags().BoolVarP(&Count, "count", "c", false, "display number of matching files")
 	rootCmd.PersistentFlags().BoolVar(&OrEqual, "or-equal", false, "match files equal to the provided dimension")
+	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "silence filename output")
 	rootCmd.PersistentFlags().BoolVarP(&Recursive, "recursive", "r", false, "include subdirectories")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "display image dimensions in output")
 }
