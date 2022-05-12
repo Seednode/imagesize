@@ -60,8 +60,6 @@ func scanDirectory(compareType string, compareValue int, directory string) {
 			} else if compareType == "shorter-than" && myImage.Height <= compareValue {
 				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
 			}
-
-			return
 		} else if Verbose && !OrEqual {
 			if compareType == "wider-than" && myImage.Width > compareValue {
 				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
@@ -72,8 +70,6 @@ func scanDirectory(compareType string, compareValue int, directory string) {
 			} else if compareType == "shorter-than" && myImage.Height < compareValue {
 				fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
 			}
-
-			return
 		} else if !Verbose && OrEqual {
 			if compareType == "wider-than" && myImage.Width >= compareValue {
 				fmt.Println(fullPath)
@@ -84,18 +80,16 @@ func scanDirectory(compareType string, compareValue int, directory string) {
 			} else if compareType == "shorter-than" && myImage.Height <= compareValue {
 				fmt.Println(fullPath)
 			}
-
-			return
-		}
-
-		if compareType == "wider-than" && myImage.Width > compareValue {
-			fmt.Println(fullPath)
-		} else if compareType == "narrower-than" && myImage.Width < compareValue {
-			fmt.Println(fullPath)
-		} else if compareType == "taller-than" && myImage.Height > compareValue {
-			fmt.Println(fullPath)
-		} else if compareType == "shorter-than" && myImage.Height < compareValue {
-			fmt.Println(fullPath)
+		} else {
+			if compareType == "wider-than" && myImage.Width > compareValue {
+				fmt.Println(fullPath)
+			} else if compareType == "narrower-than" && myImage.Width < compareValue {
+				fmt.Println(fullPath)
+			} else if compareType == "taller-than" && myImage.Height > compareValue {
+				fmt.Println(fullPath)
+			} else if compareType == "shorter-than" && myImage.Height < compareValue {
+				fmt.Println(fullPath)
+			}
 		}
 	}
 }
