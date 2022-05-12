@@ -19,6 +19,44 @@ import (
 	"sync"
 )
 
+func generateOutput(comparisonOperator compareType, compareValue int, fullPath string, height int, width int) string {
+	var returnValue string = ""
+
+	if Verbose && OrEqual {
+		if (comparisonOperator == widerthan && width >= compareValue) ||
+			(comparisonOperator == narrowerthan && width <= compareValue) ||
+			(comparisonOperator == tallerthan && height >= compareValue) ||
+			(comparisonOperator == shorterthan && height <= compareValue) {
+			returnValue = fmt.Sprintf("%v (%dx%d)",
+				fullPath, width, height)
+		}
+	} else if Verbose && !OrEqual {
+		if (comparisonOperator == widerthan && width > compareValue) ||
+			(comparisonOperator == narrowerthan && width < compareValue) ||
+			(comparisonOperator == tallerthan && height > compareValue) ||
+			(comparisonOperator == shorterthan && height < compareValue) {
+			returnValue = fmt.Sprintf("%v (%dx%d)",
+				fullPath, width, height)
+		}
+	} else if !Verbose && OrEqual {
+		if (comparisonOperator == widerthan && width >= compareValue) ||
+			(comparisonOperator == narrowerthan && width <= compareValue) ||
+			(comparisonOperator == tallerthan && height >= compareValue) ||
+			(comparisonOperator == shorterthan && height <= compareValue) {
+			returnValue = fmt.Sprintf("%v", fullPath)
+		}
+	} else {
+		if (comparisonOperator == widerthan && width > compareValue) ||
+			(comparisonOperator == narrowerthan && width < compareValue) ||
+			(comparisonOperator == tallerthan && height > compareValue) ||
+			(comparisonOperator == shorterthan && height < compareValue) {
+			returnValue = fmt.Sprintf("%v", fullPath)
+		}
+	}
+
+	return returnValue
+}
+
 func scanFile(file fs.DirEntry, ch chan<- string, wg *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) {
 	defer wg.Done()
 
@@ -47,39 +85,7 @@ func scanFile(file fs.DirEntry, ch chan<- string, wg *sync.WaitGroup, comparison
 	width := myImage.Width
 	height := myImage.Height
 
-	var output string = ""
-
-	if Verbose && OrEqual {
-		if (comparisonOperator == widerthan && width >= compareValue) ||
-			(comparisonOperator == narrowerthan && width <= compareValue) ||
-			(comparisonOperator == tallerthan && height >= compareValue) ||
-			(comparisonOperator == shorterthan && height <= compareValue) {
-			output = fmt.Sprintf("%v (%dx%d)",
-				fullPath, width, height)
-		}
-	} else if Verbose && !OrEqual {
-		if (comparisonOperator == widerthan && width > compareValue) ||
-			(comparisonOperator == narrowerthan && width < compareValue) ||
-			(comparisonOperator == tallerthan && height > compareValue) ||
-			(comparisonOperator == shorterthan && height < compareValue) {
-			output = fmt.Sprintf("%v (%dx%d)",
-				fullPath, width, height)
-		}
-	} else if !Verbose && OrEqual {
-		if (comparisonOperator == widerthan && width >= compareValue) ||
-			(comparisonOperator == narrowerthan && width <= compareValue) ||
-			(comparisonOperator == tallerthan && height >= compareValue) ||
-			(comparisonOperator == shorterthan && height <= compareValue) {
-			output = fmt.Sprintf("%v", fullPath)
-		}
-	} else {
-		if (comparisonOperator == widerthan && width > compareValue) ||
-			(comparisonOperator == narrowerthan && width < compareValue) ||
-			(comparisonOperator == tallerthan && height > compareValue) ||
-			(comparisonOperator == shorterthan && height < compareValue) {
-			output = fmt.Sprintf("%v", fullPath)
-		}
-	}
+	output := generateOutput(comparisonOperator, compareValue, fullPath, width, height)
 
 	if output != "" {
 		ch <- output
