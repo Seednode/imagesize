@@ -114,9 +114,8 @@ func ImageSizes(compareType string, arguments []string) {
 
 				return nil
 			})
-			return
+		} else {
+			scanDirectory(compareType, compareValue, arguments[dir])
 		}
-
-		scanDirectory(compareType, compareValue, arguments[dir])
 	}
 }
