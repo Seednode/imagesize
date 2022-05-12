@@ -14,7 +14,9 @@ import (
 	fs "io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
+	"sync"
 )
 
 func scanDirectory(compareType string, compareValue int, directory string) {
@@ -27,8 +29,14 @@ func scanDirectory(compareType string, compareValue int, directory string) {
 		return
 	}
 
+	ch := make(chan string)
+
+	var wg sync.WaitGroup
+
 	for _, file := range files {
-		func() {
+		wg.Add(1)
+		go func(file fs.DirEntry) {
+			defer wg.Done()
 			fileName := file.Name()
 			fullPath := filepath.Join(directory, fileName)
 
@@ -51,49 +59,68 @@ func scanDirectory(compareType string, compareValue int, directory string) {
 				panic(err)
 			}
 
+			width := myImage.Width
+			height := myImage.Height
+
+			var output string = ""
+
 			if Verbose && OrEqual {
-				if compareType == "wider-than" && myImage.Width >= compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-				} else if compareType == "narrower-than" && myImage.Width <= compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-				} else if compareType == "taller-than" && myImage.Height >= compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-				} else if compareType == "shorter-than" && myImage.Height <= compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+				if (compareType == "wider-than" && width >= compareValue) ||
+					(compareType == "narrower-than" && width <= compareValue) ||
+					(compareType == "taller-than" && height >= compareValue) ||
+					(compareType == "shorter-than" && height <= compareValue) {
+					output = fmt.Sprintf("%v (%dx%d)",
+						fullPath, width, height)
 				}
 			} else if Verbose && !OrEqual {
-				if compareType == "wider-than" && myImage.Width > compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-				} else if compareType == "narrower-than" && myImage.Width < compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-				} else if compareType == "taller-than" && myImage.Height > compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
-				} else if compareType == "shorter-than" && myImage.Height < compareValue {
-					fmt.Printf("%v (%vx%v)\n", fullPath, myImage.Width, myImage.Height)
+				if (compareType == "wider-than" && width > compareValue) ||
+					(compareType == "narrower-than" && width < compareValue) ||
+					(compareType == "taller-than" && height > compareValue) ||
+					(compareType == "shorter-than" && height < compareValue) {
+					output = fmt.Sprintf("%v (%dx%d)",
+						fullPath, width, height)
 				}
 			} else if !Verbose && OrEqual {
-				if compareType == "wider-than" && myImage.Width >= compareValue {
-					fmt.Println(fullPath)
-				} else if compareType == "narrower-than" && myImage.Width <= compareValue {
-					fmt.Println(fullPath)
-				} else if compareType == "taller-than" && myImage.Height >= compareValue {
-					fmt.Println(fullPath)
-				} else if compareType == "shorter-than" && myImage.Height <= compareValue {
-					fmt.Println(fullPath)
+				if (compareType == "wider-than" && width >= compareValue) ||
+					(compareType == "narrower-than" && width <= compareValue) ||
+					(compareType == "taller-than" && height >= compareValue) ||
+					(compareType == "shorter-than" && height <= compareValue) {
+					output = fmt.Sprintf("%v", fullPath)
 				}
 			} else {
-				if compareType == "wider-than" && myImage.Width > compareValue {
-					fmt.Println(fullPath)
-				} else if compareType == "narrower-than" && myImage.Width < compareValue {
-					fmt.Println(fullPath)
-				} else if compareType == "taller-than" && myImage.Height > compareValue {
-					fmt.Println(fullPath)
-				} else if compareType == "shorter-than" && myImage.Height < compareValue {
-					fmt.Println(fullPath)
+				if (compareType == "wider-than" && width > compareValue) ||
+					(compareType == "narrower-than" && width < compareValue) ||
+					(compareType == "taller-than" && height > compareValue) ||
+					(compareType == "shorter-than" && height < compareValue) {
+					output = fmt.Sprintf("%v", fullPath)
 				}
 			}
-		}()
+
+			if output != "" {
+				ch <- output
+			}
+		}(file)
 	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	var outputs []string
+
+	for r := range ch {
+		outputs = append(outputs, r)
+	}
+
+	sort.Slice(outputs, func(p, q int) bool {
+		return outputs[p] < outputs[q]
+	})
+
+	for o := 0; o < len(outputs); o++ {
+		fmt.Printf("%v\n", outputs[o])
+	}
+
 }
 
 func ImageSizes(compareType string, arguments []string) {
