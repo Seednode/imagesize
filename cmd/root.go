@@ -28,9 +28,11 @@ const (
 )
 
 const (
-	name   string = "name"
-	height string = "height"
-	width  string = "width"
+	ascending  string = "ascending"
+	descending string = "descending"
+	name       string = "name"
+	height     string = "height"
+	width      string = "width"
 )
 
 var (
@@ -38,6 +40,7 @@ var (
 	OrEqual   bool
 	Quiet     bool
 	Recursive bool
+	SortOrder string
 	SortBy    string
 	Unsorted  bool
 	Verbose   bool
@@ -48,6 +51,7 @@ var rootCmd = &cobra.Command{
 	Use:              "imagesize",
 	Short:            "Displays images matching the specified constraints.",
 	TraverseChildren: true,
+	Version:          Version,
 }
 
 func Execute() {
@@ -63,6 +67,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "silence filename output")
 	rootCmd.PersistentFlags().BoolVarP(&Recursive, "recursive", "r", false, "include subdirectories")
 	rootCmd.PersistentFlags().StringVarP(&SortBy, "sort-by", "s", "name", "sort output by the provided dimension")
+	rootCmd.PersistentFlags().StringVar(&SortOrder, "sort-order", "ascending", "sort output in the provided direction")
 	rootCmd.PersistentFlags().BoolVarP(&Unsorted, "unsorted", "u", false, "do not sort output")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "display image dimensions in output")
 }

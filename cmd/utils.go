@@ -179,18 +179,34 @@ func ImageSizes(comparisonOperator compareType, arguments []string) {
 	}
 
 	if !Unsorted {
-		if SortBy == height {
-			sort.SliceStable(outputs, func(p, q int) bool {
-				return outputs[p].height < outputs[q].height
-			})
-		} else if SortBy == width {
-			sort.SliceStable(outputs, func(p, q int) bool {
-				return outputs[p].width < outputs[q].width
-			})
+		if SortOrder == "ascending" {
+			if SortBy == height {
+				sort.SliceStable(outputs, func(p, q int) bool {
+					return outputs[p].height < outputs[q].height
+				})
+			} else if SortBy == width {
+				sort.SliceStable(outputs, func(p, q int) bool {
+					return outputs[p].width < outputs[q].width
+				})
+			} else {
+				sort.SliceStable(outputs, func(p, q int) bool {
+					return outputs[p].name < outputs[q].name
+				})
+			}
 		} else {
-			sort.SliceStable(outputs, func(p, q int) bool {
-				return outputs[p].name < outputs[q].name
-			})
+			if SortBy == height {
+				sort.SliceStable(outputs, func(p, q int) bool {
+					return outputs[p].height > outputs[q].height
+				})
+			} else if SortBy == width {
+				sort.SliceStable(outputs, func(p, q int) bool {
+					return outputs[p].width > outputs[q].width
+				})
+			} else {
+				sort.SliceStable(outputs, func(p, q int) bool {
+					return outputs[p].name > outputs[q].name
+				})
+			}
 		}
 	}
 
