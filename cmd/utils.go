@@ -39,6 +39,38 @@ func (e imageDataList) Swap(i, j int) {
 	e[i], e[j] = e[j], e[i]
 }
 
+func sortOutput(outputs []imageData) {
+	if SortOrder == "ascending" {
+		if SortBy == height {
+			sort.SliceStable(outputs, func(p, q int) bool {
+				return outputs[p].height < outputs[q].height
+			})
+		} else if SortBy == width {
+			sort.SliceStable(outputs, func(p, q int) bool {
+				return outputs[p].width < outputs[q].width
+			})
+		} else {
+			sort.SliceStable(outputs, func(p, q int) bool {
+				return outputs[p].name < outputs[q].name
+			})
+		}
+	} else {
+		if SortBy == height {
+			sort.SliceStable(outputs, func(p, q int) bool {
+				return outputs[p].height > outputs[q].height
+			})
+		} else if SortBy == width {
+			sort.SliceStable(outputs, func(p, q int) bool {
+				return outputs[p].width > outputs[q].width
+			})
+		} else {
+			sort.SliceStable(outputs, func(p, q int) bool {
+				return outputs[p].name > outputs[q].name
+			})
+		}
+	}
+}
+
 func generateOutput(comparisonOperator compareType, compareValue int, fullPath string, height int, width int) imageData {
 	var returnValue imageData
 
@@ -179,35 +211,7 @@ func ImageSizes(comparisonOperator compareType, arguments []string) {
 	}
 
 	if !Unsorted {
-		if SortOrder == "ascending" {
-			if SortBy == height {
-				sort.SliceStable(outputs, func(p, q int) bool {
-					return outputs[p].height < outputs[q].height
-				})
-			} else if SortBy == width {
-				sort.SliceStable(outputs, func(p, q int) bool {
-					return outputs[p].width < outputs[q].width
-				})
-			} else {
-				sort.SliceStable(outputs, func(p, q int) bool {
-					return outputs[p].name < outputs[q].name
-				})
-			}
-		} else {
-			if SortBy == height {
-				sort.SliceStable(outputs, func(p, q int) bool {
-					return outputs[p].height > outputs[q].height
-				})
-			} else if SortBy == width {
-				sort.SliceStable(outputs, func(p, q int) bool {
-					return outputs[p].width > outputs[q].width
-				})
-			} else {
-				sort.SliceStable(outputs, func(p, q int) bool {
-					return outputs[p].name > outputs[q].name
-				})
-			}
-		}
+		sortOutput(outputs)
 	}
 
 	if !Quiet {
