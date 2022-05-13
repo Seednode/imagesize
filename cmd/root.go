@@ -32,6 +32,7 @@ var (
 	OrEqual   bool
 	Quiet     bool
 	Recursive bool
+	Unsorted  bool
 	Verbose   bool
 	Version   string = "0.2"
 )
@@ -51,8 +52,9 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&Count, "count", "c", false, "display number of matching files")
-	rootCmd.PersistentFlags().BoolVar(&OrEqual, "or-equal", false, "match files equal to the provided dimension")
+	rootCmd.PersistentFlags().BoolVar(&OrEqual, "or-equal", false, "also match files equal to the provided dimension")
 	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "silence filename output")
 	rootCmd.PersistentFlags().BoolVarP(&Recursive, "recursive", "r", false, "include subdirectories")
+	rootCmd.PersistentFlags().BoolVarP(&Unsorted, "unsorted", "u", false, "do not sort output")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "display image dimensions in output")
 }

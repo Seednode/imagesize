@@ -174,9 +174,11 @@ func ImageSizes(comparisonOperator compareType, arguments []string) {
 		outputs = append(outputs, r)
 	}
 
-	sort.SliceStable(outputs, func(p, q int) bool {
-		return outputs[p] < outputs[q]
-	})
+	if !Unsorted {
+		sort.SliceStable(outputs, func(p, q int) bool {
+			return outputs[p] < outputs[q]
+		})
+	}
 
 	if !Quiet {
 		for o := 0; o < len(outputs); o++ {
