@@ -57,8 +57,13 @@ func generateOutput(comparisonOperator compareType, compareValue int, fullPath s
 	return returnValue
 }
 
-func scanFile(file fs.DirEntry, ch chan<- string, wg *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) {
-	defer wg.Done()
+func scanFile(file fs.DirEntry, fileScans chan int, outputChannel chan<- string, waitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) {
+	defer func() {
+		<-fileScans
+		waitGroup.Done()
+	}()
+
+	fileScans <- 1
 
 	fileName := file.Name()
 	fullPath := filepath.Join(directory, fileName)
@@ -88,11 +93,18 @@ func scanFile(file fs.DirEntry, ch chan<- string, wg *sync.WaitGroup, comparison
 	output := generateOutput(comparisonOperator, compareValue, fullPath, width, height)
 
 	if output != "" {
-		ch <- output
+		outputChannel <- output
 	}
 }
 
-func scanDirectory(ch chan<- string, wg *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) {
+func scanDirectory(directoryScans chan int, fileScans chan int, outputChannel chan string, waitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) {
+	defer func() {
+		<-directoryScans
+		waitGroup.Done()
+	}()
+
+	directoryScans <- 1
+
 	files, err := os.ReadDir(directory)
 	if err != nil {
 		panic(err)
@@ -103,14 +115,14 @@ func scanDirectory(ch chan<- string, wg *sync.WaitGroup, comparisonOperator comp
 	}
 
 	for _, file := range files {
-		wg.Add(1)
+		waitGroup.Add(1)
 
-		go scanFile(file, ch, wg, comparisonOperator, compareValue, directory)
+		go scanFile(file, fileScans, outputChannel, waitGroup, comparisonOperator, compareValue, directory)
 	}
 }
 
-func scanDirectories(ch chan<- string, wg *sync.WaitGroup, comparisonOperator compareType, compareValue int, arguments []string, dir int) {
-	defer wg.Done()
+func scanDirectories(directoryScans chan int, fileScans chan int, outputChannel chan string, waitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, arguments []string, dir int) {
+	defer waitGroup.Done()
 
 	if Recursive {
 		directory := arguments[dir]
@@ -119,19 +131,15 @@ func scanDirectories(ch chan<- string, wg *sync.WaitGroup, comparisonOperator co
 
 		fs.WalkDir(filesystem, ".", func(path string, d fs.DirEntry, err error) error {
 			if d.IsDir() {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-
-					fullPath := filepath.Join(directory, path)
-					scanDirectory(ch, wg, comparisonOperator, compareValue, fullPath)
-				}()
+				waitGroup.Add(1)
+				fullPath := filepath.Join(directory, path)
+				go scanDirectory(directoryScans, fileScans, outputChannel, waitGroup, comparisonOperator, compareValue, fullPath)
 			}
 
 			return nil
 		})
 	} else {
-		scanDirectory(ch, wg, comparisonOperator, compareValue, arguments[dir])
+		scanDirectory(directoryScans, fileScans, outputChannel, waitGroup, comparisonOperator, compareValue, arguments[dir])
 	}
 }
 
@@ -141,24 +149,28 @@ func ImageSizes(comparisonOperator compareType, arguments []string) {
 		panic(err)
 	}
 
-	ch := make(chan string)
+	outputChannel := make(chan string)
 
-	var wg sync.WaitGroup
+	var waitGroup sync.WaitGroup
+
+	directoryScans := make(chan int, maxDirectoryScans)
+	fileScans := make(chan int, maxFileScans)
 
 	for dir := 1; dir < len(arguments); dir++ {
-		wg.Add(1)
-
-		go scanDirectories(ch, &wg, comparisonOperator, compareValue, arguments, dir)
+		waitGroup.Add(1)
+		go scanDirectories(directoryScans, fileScans, outputChannel, &waitGroup, comparisonOperator, compareValue, arguments, dir)
 	}
 
 	go func() {
-		wg.Wait()
-		close(ch)
+		waitGroup.Wait()
+		close(outputChannel)
+		close(directoryScans)
+		close(fileScans)
 	}()
 
 	var outputs []string
 
-	for r := range ch {
+	for r := range outputChannel {
 		outputs = append(outputs, r)
 	}
 

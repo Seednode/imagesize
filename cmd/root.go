@@ -11,12 +11,16 @@ import (
 )
 
 type compareType int
+type maxConcurrency int
 
 const (
 	widerthan compareType = iota
 	narrowerthan
 	tallerthan
 	shorterthan
+
+	maxDirectoryScans maxConcurrency = 4
+	maxFileScans      maxConcurrency = 32
 )
 
 var (
