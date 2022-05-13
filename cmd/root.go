@@ -49,7 +49,7 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:              "imagesize",
-	Short:            "Displays images matching the specified constraints.",
+	Short:            "displays images matching the specified constraints",
 	TraverseChildren: true,
 	Version:          Version,
 }
@@ -63,11 +63,11 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&Count, "count", "c", false, "display number of matching files")
-	rootCmd.PersistentFlags().BoolVar(&OrEqual, "or-equal", false, "also match files equal to the provided dimension")
+	rootCmd.PersistentFlags().BoolVar(&OrEqual, "or-equal", false, "also match files equal to the specified dimension")
 	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "silence filename output")
 	rootCmd.PersistentFlags().BoolVarP(&Recursive, "recursive", "r", false, "include subdirectories")
-	rootCmd.PersistentFlags().StringVarP(&SortBy, "sort-by", "s", "name", "sort output by the provided dimension")
-	rootCmd.PersistentFlags().StringVar(&SortOrder, "sort-order", "ascending", "sort output in the provided direction")
+	rootCmd.PersistentFlags().StringVarP(&SortBy, "sort-by", "s", "name", "sort output by the specified key")
+	rootCmd.PersistentFlags().StringVar(&SortOrder, "sort-order", "ascending", "sort output in the specified direction")
 	rootCmd.PersistentFlags().BoolVarP(&Unsorted, "unsorted", "u", false, "do not sort output")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "display image dimensions in output")
 }

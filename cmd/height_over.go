@@ -10,8 +10,7 @@ import (
 
 var height_overCmd = &cobra.Command{
 	Use:   "over <size in pixels> <directory1> [directory2]...",
-	Short: "Display all images over the specified height.",
-	Long:  "Display all images over the specified height in the directory or directories provided.",
+	Short: "Filter images by height",
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		ImageSizes(tallerthan, args)

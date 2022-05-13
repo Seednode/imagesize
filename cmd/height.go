@@ -10,8 +10,7 @@ import (
 
 var heightCmd = &cobra.Command{
 	Use:   "height",
-	Short: "Display all images over or under the specified height.",
-}
+	Short: "Filter images by height"}
 
 func init() {
 	rootCmd.AddCommand(heightCmd)

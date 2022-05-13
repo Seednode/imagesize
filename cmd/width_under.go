@@ -10,8 +10,7 @@ import (
 
 var width_underCmd = &cobra.Command{
 	Use:   "under <size in pixels> <directory1> [directory2]...",
-	Short: "Display all images under the specified width.",
-	Long:  "Display all images under the specified width in the directory or directories provided.",
+	Short: "Filter images by width",
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		ImageSizes(narrowerthan, args)

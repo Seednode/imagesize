@@ -10,8 +10,7 @@ import (
 
 var width_overCmd = &cobra.Command{
 	Use:   "over <size in pixels> <directory1> [directory2]...",
-	Short: "Display all images over the specified width.",
-	Long:  "Display all images over the specified width in the directory or directories provided.",
+	Short: "Filter images by width",
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		ImageSizes(widerthan, args)

@@ -10,7 +10,7 @@ import (
 
 var widthCmd = &cobra.Command{
 	Use:   "width",
-	Short: "Display all images over or under the specified width.",
+	Short: "Filter images by width",
 }
 
 func init() {
