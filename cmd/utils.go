@@ -19,45 +19,49 @@ import (
 	"sync"
 )
 
-func generateOutput(comparisonOperator compareType, compareValue int, fullPath string, height int, width int) string {
-	var returnValue string = ""
+type imageData struct {
+	name   string
+	width  int
+	height int
+}
 
-	if Verbose && OrEqual {
+type imageDataList []imageData
+
+func (e imageDataList) Len() int {
+	return len(e)
+}
+
+func (e imageDataList) Less(i, j int) bool {
+	return e[i].width > e[j].width
+}
+
+func (e imageDataList) Swap(i, j int) {
+	e[i], e[j] = e[j], e[i]
+}
+
+func generateOutput(comparisonOperator compareType, compareValue int, fullPath string, height int, width int) imageData {
+	var returnValue imageData
+
+	if OrEqual {
 		if (comparisonOperator == widerthan && width >= compareValue) ||
 			(comparisonOperator == narrowerthan && width <= compareValue) ||
 			(comparisonOperator == tallerthan && height >= compareValue) ||
 			(comparisonOperator == shorterthan && height <= compareValue) {
-			returnValue = fmt.Sprintf("%v (%dx%d)",
-				fullPath, width, height)
-		}
-	} else if Verbose && !OrEqual {
-		if (comparisonOperator == widerthan && width > compareValue) ||
-			(comparisonOperator == narrowerthan && width < compareValue) ||
-			(comparisonOperator == tallerthan && height > compareValue) ||
-			(comparisonOperator == shorterthan && height < compareValue) {
-			returnValue = fmt.Sprintf("%v (%dx%d)",
-				fullPath, width, height)
-		}
-	} else if !Verbose && OrEqual {
-		if (comparisonOperator == widerthan && width >= compareValue) ||
-			(comparisonOperator == narrowerthan && width <= compareValue) ||
-			(comparisonOperator == tallerthan && height >= compareValue) ||
-			(comparisonOperator == shorterthan && height <= compareValue) {
-			returnValue = fmt.Sprintf("%v", fullPath)
+			returnValue = imageData{name: fullPath, width: width, height: height}
 		}
 	} else {
 		if (comparisonOperator == widerthan && width > compareValue) ||
 			(comparisonOperator == narrowerthan && width < compareValue) ||
 			(comparisonOperator == tallerthan && height > compareValue) ||
 			(comparisonOperator == shorterthan && height < compareValue) {
-			returnValue = fmt.Sprintf("%v", fullPath)
+			returnValue = imageData{name: fullPath, width: width, height: height}
 		}
 	}
 
 	return returnValue
 }
 
-func scanFile(file fs.DirEntry, fileScans chan int, outputChannel chan<- string, waitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) {
+func scanFile(file fs.DirEntry, fileScans chan int, outputChannel chan<- imageData, waitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) {
 	defer func() {
 		<-fileScans
 		waitGroup.Done()
@@ -92,12 +96,12 @@ func scanFile(file fs.DirEntry, fileScans chan int, outputChannel chan<- string,
 
 	output := generateOutput(comparisonOperator, compareValue, fullPath, width, height)
 
-	if output != "" {
+	if output.name != "" {
 		outputChannel <- output
 	}
 }
 
-func scanDirectory(directoryScans chan int, fileScans chan int, outputChannel chan string, waitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) {
+func scanDirectory(directoryScans chan int, fileScans chan int, outputChannel chan imageData, waitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) {
 	defer func() {
 		<-directoryScans
 		waitGroup.Done()
@@ -121,7 +125,7 @@ func scanDirectory(directoryScans chan int, fileScans chan int, outputChannel ch
 	}
 }
 
-func scanDirectories(directoryScans chan int, fileScans chan int, outputChannel chan string, waitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, arguments []string, dir int) {
+func scanDirectories(directoryScans chan int, fileScans chan int, outputChannel chan imageData, waitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, arguments []string, dir int) {
 	defer waitGroup.Done()
 
 	if Recursive {
@@ -149,7 +153,7 @@ func ImageSizes(comparisonOperator compareType, arguments []string) {
 		panic(err)
 	}
 
-	outputChannel := make(chan string)
+	outputChannel := make(chan imageData)
 
 	var waitGroup sync.WaitGroup
 
@@ -168,21 +172,32 @@ func ImageSizes(comparisonOperator compareType, arguments []string) {
 		close(fileScans)
 	}()
 
-	var outputs []string
+	var outputs []imageData
 
 	for r := range outputChannel {
 		outputs = append(outputs, r)
 	}
 
 	if !Unsorted {
-		sort.SliceStable(outputs, func(p, q int) bool {
-			return outputs[p] < outputs[q]
-		})
+		if SortBy == height {
+			sort.SliceStable(outputs, func(p, q int) bool {
+				return outputs[p].height < outputs[q].height
+			})
+		} else if SortBy == width {
+			sort.SliceStable(outputs, func(p, q int) bool {
+				return outputs[p].width < outputs[q].width
+			})
+		} else {
+			sort.SliceStable(outputs, func(p, q int) bool {
+				return outputs[p].name < outputs[q].name
+			})
+		}
 	}
 
 	if !Quiet {
 		for o := 0; o < len(outputs); o++ {
-			fmt.Printf("%v\n", outputs[o])
+			i := outputs[o]
+			fmt.Printf("%v (%vx%v)\n", i.name, i.width, i.height)
 		}
 	}
 

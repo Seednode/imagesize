@@ -27,11 +27,18 @@ const (
 	maxFileScans      maxConcurrency = 256
 )
 
+const (
+	name   string = "name"
+	height string = "height"
+	width  string = "width"
+)
+
 var (
 	Count     bool
 	OrEqual   bool
 	Quiet     bool
 	Recursive bool
+	SortBy    string
 	Unsorted  bool
 	Verbose   bool
 	Version   string = "0.2"
@@ -55,6 +62,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&OrEqual, "or-equal", false, "also match files equal to the provided dimension")
 	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "silence filename output")
 	rootCmd.PersistentFlags().BoolVarP(&Recursive, "recursive", "r", false, "include subdirectories")
+	rootCmd.PersistentFlags().StringVarP(&SortBy, "sort-by", "s", "name", "sort output by the provided dimension")
 	rootCmd.PersistentFlags().BoolVarP(&Unsorted, "unsorted", "u", false, "do not sort output")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "display image dimensions in output")
 }
