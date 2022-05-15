@@ -26,34 +26,31 @@ type imageData struct {
 }
 
 func sortOutput(outputs []imageData) {
-	if SortOrder == "ascending" {
-		if SortBy == height {
-			sort.SliceStable(outputs, func(p, q int) bool {
-				return outputs[p].height < outputs[q].height
-			})
-		} else if SortBy == width {
-			sort.SliceStable(outputs, func(p, q int) bool {
-				return outputs[p].width < outputs[q].width
-			})
-		} else {
-			sort.SliceStable(outputs, func(p, q int) bool {
-				return outputs[p].name < outputs[q].name
-			})
-		}
-	} else {
-		if SortBy == height {
-			sort.SliceStable(outputs, func(p, q int) bool {
-				return outputs[p].height > outputs[q].height
-			})
-		} else if SortBy == width {
-			sort.SliceStable(outputs, func(p, q int) bool {
-				return outputs[p].width > outputs[q].width
-			})
-		} else {
-			sort.SliceStable(outputs, func(p, q int) bool {
-				return outputs[p].name > outputs[q].name
-			})
-		}
+	switch {
+	case SortOrder == "ascending" && SortBy == height:
+		sort.SliceStable(outputs, func(p, q int) bool {
+			return outputs[p].height < outputs[q].height
+		})
+	case SortOrder == "ascending" && SortBy == width:
+		sort.SliceStable(outputs, func(p, q int) bool {
+			return outputs[p].width < outputs[q].width
+		})
+	case SortOrder == "ascending" && SortBy == name:
+		sort.SliceStable(outputs, func(p, q int) bool {
+			return outputs[p].name < outputs[q].name
+		})
+	case SortOrder == "descending" && SortBy == height:
+		sort.SliceStable(outputs, func(p, q int) bool {
+			return outputs[p].height > outputs[q].height
+		})
+	case SortOrder == "descending" && SortBy == width:
+		sort.SliceStable(outputs, func(p, q int) bool {
+			return outputs[p].width > outputs[q].width
+		})
+	case SortOrder == "descending" && SortBy == name:
+		sort.SliceStable(outputs, func(p, q int) bool {
+			return outputs[p].name > outputs[q].name
+		})
 	}
 }
 
