@@ -25,55 +25,91 @@ type imageData struct {
 	height int
 }
 
-func sortOutput(outputs []imageData) {
+func parseSortBy() (sortBy, error) {
+	InvalidSortBy := errors.New("invalid sort order provided. valid options: name, height, width")
+
 	switch {
-	case SortOrder == "ascending" && SortBy == height:
+	case SortBy == "name":
+		return name, nil
+	case SortBy == "height":
+		return height, nil
+	case SortBy == "width":
+		return width, nil
+	default:
+		return 0, InvalidSortBy
+	}
+}
+
+func parseSortOrder() (sortOrder, error) {
+	InvalidSortOrder := errors.New("invalid sort order provided. valid options: ascending, descending")
+
+	switch {
+	case SortOrder == "ascending":
+		return ascending, nil
+	case SortOrder == "descending":
+		return descending, nil
+	default:
+		return 0, InvalidSortOrder
+	}
+}
+
+func sortOutput(outputs []imageData) error {
+	sortBy, err := parseSortBy()
+	if err != nil {
+		return err
+	}
+
+	sortOrder, err := parseSortOrder()
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case sortOrder == ascending && sortBy == height:
 		sort.SliceStable(outputs, func(p, q int) bool {
 			return outputs[p].height < outputs[q].height
 		})
-	case SortOrder == "ascending" && SortBy == width:
+		return nil
+	case sortOrder == ascending && sortBy == width:
 		sort.SliceStable(outputs, func(p, q int) bool {
 			return outputs[p].width < outputs[q].width
 		})
-	case SortOrder == "ascending" && SortBy == name:
+	case sortOrder == ascending && sortBy == name:
 		sort.SliceStable(outputs, func(p, q int) bool {
 			return outputs[p].name < outputs[q].name
 		})
-	case SortOrder == "descending" && SortBy == height:
+	case sortOrder == descending && sortBy == height:
 		sort.SliceStable(outputs, func(p, q int) bool {
 			return outputs[p].height > outputs[q].height
 		})
-	case SortOrder == "descending" && SortBy == width:
+	case sortOrder == descending && sortBy == width:
 		sort.SliceStable(outputs, func(p, q int) bool {
 			return outputs[p].width > outputs[q].width
 		})
-	case SortOrder == "descending" && SortBy == name:
+	case sortOrder == descending && sortBy == name:
 		sort.SliceStable(outputs, func(p, q int) bool {
 			return outputs[p].name > outputs[q].name
 		})
 	}
+
+	return nil
 }
 
 func generateOutput(comparisonOperator compareType, compareValue int, fullPath string, height int, width int) imageData {
-	var returnValue imageData
-
-	if OrEqual {
-		if (comparisonOperator == widerthan && width >= compareValue) ||
-			(comparisonOperator == narrowerthan && width <= compareValue) ||
-			(comparisonOperator == tallerthan && height >= compareValue) ||
-			(comparisonOperator == shorterthan && height <= compareValue) {
-			returnValue = imageData{name: fullPath, width: width, height: height}
-		}
-	} else {
-		if (comparisonOperator == widerthan && width > compareValue) ||
-			(comparisonOperator == narrowerthan && width < compareValue) ||
-			(comparisonOperator == tallerthan && height > compareValue) ||
-			(comparisonOperator == shorterthan && height < compareValue) {
-			returnValue = imageData{name: fullPath, width: width, height: height}
-		}
+	switch {
+	case OrEqual && comparisonOperator == widerthan && width >= compareValue,
+		OrEqual && comparisonOperator == narrowerthan && width <= compareValue,
+		OrEqual && comparisonOperator == tallerthan && height >= compareValue,
+		OrEqual && comparisonOperator == shorterthan && height <= compareValue:
+		return imageData{name: fullPath, width: width, height: height}
+	case comparisonOperator == widerthan && width > compareValue,
+		comparisonOperator == narrowerthan && width < compareValue,
+		comparisonOperator == tallerthan && height > compareValue,
+		comparisonOperator == shorterthan && height < compareValue:
+		return imageData{name: fullPath, width: width, height: height}
+	default:
+		return imageData{}
 	}
-
-	return returnValue
 }
 
 func scanFile(file fs.DirEntry, fileScans chan int, outputChannel chan<- imageData, scanDirectoryWaitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) error {
@@ -112,6 +148,10 @@ func scanFile(file fs.DirEntry, fileScans chan int, outputChannel chan<- imageDa
 	height := myImage.Height
 
 	output := generateOutput(comparisonOperator, compareValue, fullPath, width, height)
+	if (imageData{} == output) {
+		err := errors.New("passed empty imageData{} to scanFile()")
+		return err
+	}
 
 	if output.name != "" {
 		outputChannel <- output
