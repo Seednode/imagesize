@@ -10,6 +10,7 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"io"
 	fs "io/fs"
 	"os"
 	"path/filepath"
@@ -26,8 +27,8 @@ type imageData struct {
 	height int
 }
 
-func parseSortBy() (sortBy, error) {
-	InvalidSortBy := errors.New("invalid sort order provided. valid options: name, height, width")
+func ParseSortBy() (SortKey, error) {
+	err := errors.New("invalid sort key provided. valid options: name, height, width")
 
 	switch {
 	case SortBy == "name":
@@ -37,12 +38,12 @@ func parseSortBy() (sortBy, error) {
 	case SortBy == "width":
 		return width, nil
 	default:
-		return 0, InvalidSortBy
+		return invalidSortKey, err
 	}
 }
 
-func parseSortOrder() (sortOrder, error) {
-	InvalidSortOrder := errors.New("invalid sort order provided. valid options: ascending, descending")
+func ParseSortOrder() (SortDirection, error) {
+	err := errors.New("invalid sort order provided. valid options: ascending, descending")
 
 	switch {
 	case SortOrder == "ascending":
@@ -50,17 +51,17 @@ func parseSortOrder() (sortOrder, error) {
 	case SortOrder == "descending":
 		return descending, nil
 	default:
-		return -1, InvalidSortOrder
+		return invalidSortDirection, err
 	}
 }
 
-func sortOutput(outputs []imageData) error {
-	sortBy, err := parseSortBy()
+func SortOutput(outputs []imageData) error {
+	sortBy, err := ParseSortBy()
 	if err != nil {
 		return err
 	}
 
-	sortOrder, err := parseSortOrder()
+	sortOrder, err := ParseSortOrder()
 	if err != nil {
 		return err
 	}
@@ -95,7 +96,7 @@ func sortOutput(outputs []imageData) error {
 	return nil
 }
 
-func generateOutput(comparisonOperator compareType, compareValue int, fullPath string, height int, width int) imageData {
+func GenerateOutput(comparisonOperator CompareType, compareValue int, fullPath string, height int, width int) imageData {
 	switch {
 	case OrEqual && comparisonOperator == widerthan && width >= compareValue,
 		OrEqual && comparisonOperator == narrowerthan && width <= compareValue,
@@ -112,44 +113,18 @@ func generateOutput(comparisonOperator compareType, compareValue int, fullPath s
 	}
 }
 
-func scanFile(file fs.DirEntry, fileScans chan int, outputChannel chan<- imageData, scanDirectoryWaitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) error {
-	defer func() {
-		<-fileScans
-		scanDirectoryWaitGroup.Done()
-	}()
-
-	fileScans <- 1
-
-	fileName := file.Name()
-	fullPath := filepath.Join(directory, fileName)
-
-	reader, err := os.Open(fullPath)
-	if err != nil {
-		return err
-	}
-
-	defer func() error {
-		err := reader.Close()
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}()
-
+func DecodeImage(fullPath string, reader io.Reader, outputChannel chan<- imageData, comparisonOperator CompareType, compareValue int) error {
 	myImage, _, err := image.DecodeConfig(reader)
-	if errors.Is(err, image.ErrFormat) {
-		return nil
-	} else if err != nil {
+	if err != nil {
 		return err
 	}
 
 	width := myImage.Width
 	height := myImage.Height
 
-	output := generateOutput(comparisonOperator, compareValue, fullPath, width, height)
+	output := GenerateOutput(comparisonOperator, compareValue, fullPath, width, height)
 	if (imageData{} == output) {
-		err := errors.New("passed empty imageData{} to scanFile()")
+		err := errors.New("passed empty imageData{} to ScanFile()")
 		return err
 	}
 
@@ -160,7 +135,44 @@ func scanFile(file fs.DirEntry, fileScans chan int, outputChannel chan<- imageDa
 	return nil
 }
 
-func scanDirectory(directoryScans chan int, fileScans chan int, outputChannel chan imageData, scanDirectoriesWaitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, directory string) error {
+func ReadFile(fullPath string) (*os.File, io.Reader, error) {
+	file, err := os.Open(fullPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	reader := file
+
+	return file, reader, err
+}
+
+func ScanFile(fullPath string, comparisonOperator CompareType, compareValue int, fileScans chan int, outputChannel chan<- imageData, scanDirectoryWaitGroup *sync.WaitGroup) error {
+	defer func() {
+		<-fileScans
+		scanDirectoryWaitGroup.Done()
+	}()
+
+	fileScans <- 1
+
+	filePtr, reader, err := ReadFile(fullPath)
+	if err != nil {
+		return err
+	}
+	defer func() error {
+		err := filePtr.Close()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}()
+
+	DecodeImage(fullPath, reader, outputChannel, comparisonOperator, compareValue)
+
+	return nil
+}
+
+func ScanDirectory(directory string, comparisonOperator CompareType, compareValue int, directoryScans chan int, fileScans chan int, outputChannel chan imageData, scanDirectoriesWaitGroup *sync.WaitGroup) error {
 	defer func() {
 		<-directoryScans
 		scanDirectoriesWaitGroup.Done()
@@ -182,7 +194,8 @@ func scanDirectory(directoryScans chan int, fileScans chan int, outputChannel ch
 	for _, file := range files {
 		scanDirectoryWaitGroup.Add(1)
 
-		go scanFile(file, fileScans, outputChannel, &scanDirectoryWaitGroup, comparisonOperator, compareValue, directory)
+		fullPath := filepath.Join(directory, file.Name())
+		go ScanFile(fullPath, comparisonOperator, compareValue, fileScans, outputChannel, &scanDirectoryWaitGroup)
 	}
 
 	scanDirectoryWaitGroup.Wait()
@@ -190,39 +203,38 @@ func scanDirectory(directoryScans chan int, fileScans chan int, outputChannel ch
 	return nil
 }
 
-func scanDirectories(directoryScans chan int, fileScans chan int, outputChannel chan imageData, imageSizesWaitGroup *sync.WaitGroup, comparisonOperator compareType, compareValue int, arguments []string, dir int) error {
+func ScanDirectories(directory string, comparisonOperator CompareType, compareValue int, directoryScans chan int, fileScans chan int, outputChannel chan imageData, imageSizesWaitGroup *sync.WaitGroup) error {
 	defer imageSizesWaitGroup.Done()
 
-	var scanDirectoriesWaitGroup sync.WaitGroup
+	var ScanDirectoriesWaitGroup sync.WaitGroup
 
 	if Recursive {
-		directory := arguments[dir]
-
 		filesystem := os.DirFS(directory)
 
 		fs.WalkDir(filesystem, ".", func(path string, d fs.DirEntry, err error) error {
 			if d.IsDir() {
-				scanDirectoriesWaitGroup.Add(1)
+				ScanDirectoriesWaitGroup.Add(1)
+
 				fullPath := filepath.Join(directory, path)
-				go scanDirectory(directoryScans, fileScans, outputChannel, &scanDirectoriesWaitGroup, comparisonOperator, compareValue, fullPath)
+				go ScanDirectory(fullPath, comparisonOperator, compareValue, directoryScans, fileScans, outputChannel, &ScanDirectoriesWaitGroup)
 			}
 
 			return nil
 		})
 	} else {
-		scanDirectoriesWaitGroup.Add(1)
-		err := scanDirectory(directoryScans, fileScans, outputChannel, &scanDirectoriesWaitGroup, comparisonOperator, compareValue, arguments[dir])
+		ScanDirectoriesWaitGroup.Add(1)
+		err := ScanDirectory(directory, comparisonOperator, compareValue, directoryScans, fileScans, outputChannel, &ScanDirectoriesWaitGroup)
 		if err != nil {
 			return err
 		}
 	}
 
-	scanDirectoriesWaitGroup.Wait()
+	ScanDirectoriesWaitGroup.Wait()
 
 	return nil
 }
 
-func ImageSizes(comparisonOperator compareType, arguments []string) error {
+func ImageSizes(comparisonOperator CompareType, arguments []string) error {
 	compareValue, err := strconv.Atoi(arguments[0])
 	if err != nil {
 		return err
@@ -237,7 +249,8 @@ func ImageSizes(comparisonOperator compareType, arguments []string) error {
 
 	for dir := 1; dir < len(arguments); dir++ {
 		imageSizesWaitGroup.Add(1)
-		go scanDirectories(directoryScans, fileScans, outputChannel, &imageSizesWaitGroup, comparisonOperator, compareValue, arguments, dir)
+		directory := arguments[dir]
+		go ScanDirectories(directory, comparisonOperator, compareValue, directoryScans, fileScans, outputChannel, &imageSizesWaitGroup)
 	}
 
 	go func() {
@@ -254,14 +267,21 @@ func ImageSizes(comparisonOperator compareType, arguments []string) error {
 	}
 
 	if !Unsorted {
-		sortOutput(outputs)
+		SortOutput(outputs)
 	}
 
-	if !Quiet {
+	switch {
+	case !Quiet && Verbose:
 		for o := 0; o < len(outputs); o++ {
 			i := outputs[o]
 			fmt.Printf("%v (%vx%v)\n", i.name, i.width, i.height)
 		}
+	case !Quiet && !Verbose:
+		for o := 0; o < len(outputs); o++ {
+			i := outputs[o]
+			fmt.Printf("%v\n", i.name)
+		}
+	default:
 	}
 
 	if Count {

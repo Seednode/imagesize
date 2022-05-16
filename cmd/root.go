@@ -10,36 +10,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type sortOrder int
+type SortDirection int
 
 const (
-	ascending sortOrder = iota
+	invalidSortDirection SortDirection = iota
+	ascending
 	descending
 )
 
-type sortBy int
+type SortKey int
 
 const (
-	name sortBy = iota
+	invalidSortKey SortKey = iota
+	name
 	height
 	width
 )
 
-type compareType int
+type CompareType int
 
 const (
-	widerthan compareType = iota
+	widerthan CompareType = iota
 	narrowerthan
 	tallerthan
 	shorterthan
 )
 
-type maxConcurrency int
+type MaxConcurrency int
 
 const (
 	// avoid hitting default open file descriptor limits (1024)
-	maxDirectoryScans maxConcurrency = 32
-	maxFileScans      maxConcurrency = 256
+	maxDirectoryScans MaxConcurrency = 32
+	maxFileScans      MaxConcurrency = 256
 )
 
 var (
