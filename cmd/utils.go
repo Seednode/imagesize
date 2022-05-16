@@ -69,7 +69,6 @@ func sortOutput(outputs []imageData) error {
 		sort.SliceStable(outputs, func(p, q int) bool {
 			return outputs[p].height < outputs[q].height
 		})
-		return nil
 	case sortOrder == ascending && sortBy == width:
 		sort.SliceStable(outputs, func(p, q int) bool {
 			return outputs[p].width < outputs[q].width
