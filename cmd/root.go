@@ -73,7 +73,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&OrEqual, "or-equal", false, "also match files equal to the specified dimension")
 	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "silence filename output")
 	rootCmd.PersistentFlags().BoolVarP(&Recursive, "recursive", "r", false, "include subdirectories")
-	rootCmd.PersistentFlags().StringVarP(&SortBy, "sort-by", "s", "name", "sort output by the specified key")
+	rootCmd.PersistentFlags().StringVar(&SortBy, "sort-by", "name", "sort output by the specified key")
 	rootCmd.PersistentFlags().StringVar(&SortOrder, "sort-order", "ascending", "sort output in the specified direction")
 	rootCmd.PersistentFlags().BoolVarP(&Unsorted, "unsorted", "u", false, "do not sort output")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "display image dimensions in output")

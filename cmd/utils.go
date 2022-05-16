@@ -5,7 +5,6 @@ Copyright © 2022 Seednode <seednode@seedno.de>
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"image"
 	_ "image/gif"
@@ -17,6 +16,8 @@ import (
 	"sort"
 	"strconv"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 type imageData struct {
@@ -49,7 +50,7 @@ func parseSortOrder() (sortOrder, error) {
 	case SortOrder == "descending":
 		return descending, nil
 	default:
-		return 0, InvalidSortOrder
+		return -1, InvalidSortOrder
 	}
 }
 
@@ -266,6 +267,8 @@ func ImageSizes(comparisonOperator compareType, arguments []string) error {
 	if Count {
 		fmt.Printf("\n%v file(s) matched.\n", len(outputs))
 	}
+
+	fmt.Printf("")
 
 	return nil
 }
