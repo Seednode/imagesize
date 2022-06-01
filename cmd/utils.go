@@ -96,7 +96,7 @@ func SortOutput(outputs []imageData) error {
 	return nil
 }
 
-func GenerateOutput(comparisonOperator CompareType, compareValue int, fullPath string, height int, width int) imageData {
+func GenerateOutput(comparisonOperator CompareType, compareValue int, fullPath string, width int, height int) imageData {
 	switch {
 	case OrEqual && comparisonOperator == widerthan && width >= compareValue,
 		OrEqual && comparisonOperator == narrowerthan && width <= compareValue,
