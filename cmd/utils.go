@@ -101,9 +101,7 @@ func generateOutput(comparisonOperator CompareType, compareValue int, fullPath s
 	case OrEqual && comparisonOperator == widerthan && width >= compareValue,
 		OrEqual && comparisonOperator == narrowerthan && width <= compareValue,
 		OrEqual && comparisonOperator == tallerthan && height >= compareValue,
-		OrEqual && comparisonOperator == shorterthan && height <= compareValue:
-		return ImageData{name: fullPath, width: width, height: height}
-	case comparisonOperator == widerthan && width > compareValue,
+		OrEqual && comparisonOperator == shorterthan && height <= compareValue,
 		comparisonOperator == narrowerthan && width < compareValue,
 		comparisonOperator == tallerthan && height > compareValue,
 		comparisonOperator == shorterthan && height < compareValue:
