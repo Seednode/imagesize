@@ -123,10 +123,6 @@ func decodeImage(fullPath string, reader io.Reader, outputChannel chan<- ImageDa
 	height := myImage.Height
 
 	output := generateOutput(comparisonOperator, compareValue, fullPath, width, height)
-	if (ImageData{} == output) {
-		err := errors.New("passed empty ImageData{} to ScanFile()")
-		return err
-	}
 
 	if output.name != "" {
 		outputChannel <- output
