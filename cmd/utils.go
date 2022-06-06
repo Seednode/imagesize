@@ -113,7 +113,9 @@ func generateOutput(comparisonOperator CompareType, compareValue int, fullPath s
 
 func decodeImage(fullPath string, reader io.Reader, outputChannel chan<- ImageData, comparisonOperator CompareType, compareValue int) error {
 	myImage, _, err := image.DecodeConfig(reader)
-	if err != nil {
+	if errors.Is(err, image.ErrFormat) {
+		return nil
+	} else if err != nil {
 		return err
 	}
 
