@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var height_underCmd = &cobra.Command{
+var heightUnderCmd = &cobra.Command{
 	Use:   "under <size in pixels> <directory1> [directory2]...",
 	Short: "Filter images by height",
 	Args:  cobra.MinimumNArgs(2),
@@ -18,5 +18,5 @@ var height_underCmd = &cobra.Command{
 }
 
 func init() {
-	heightCmd.AddCommand(height_underCmd)
+	heightCmd.AddCommand(heightUnderCmd)
 }

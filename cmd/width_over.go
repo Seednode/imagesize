@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var width_overCmd = &cobra.Command{
+var widthOverCmd = &cobra.Command{
 	Use:   "over <size in pixels> <directory1> [directory2]...",
 	Short: "Filter images by width",
 	Args:  cobra.MinimumNArgs(2),
@@ -18,5 +18,5 @@ var width_overCmd = &cobra.Command{
 }
 
 func init() {
-	widthCmd.AddCommand(width_overCmd)
+	widthCmd.AddCommand(widthOverCmd)
 }

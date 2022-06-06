@@ -18,7 +18,7 @@ func TestParseSortBy(t *testing.T) {
 	for option := range possibleOptions {
 		SortBy = possibleOptions[option]
 		Expected := expectedResponses[option]
-		Returned, _ := ParseSortBy()
+		Returned, _ := parseSortBy()
 		if Returned != Expected {
 			t.Errorf("ParseSortBy() returned %v, expected %v.\n", Returned, Expected)
 			t.FailNow()
@@ -33,7 +33,7 @@ func TestParseSortOrder(t *testing.T) {
 	for option := range possibleOptions {
 		SortOrder = possibleOptions[option]
 		Expected := expectedResponses[option]
-		Returned, _ := ParseSortOrder()
+		Returned, _ := parseSortOrder()
 		if Returned != Expected {
 			t.Errorf("ParseSortOrder() returned %v, expected %v.\n", Returned, Expected)
 			t.FailNow()
@@ -46,10 +46,10 @@ func TestDecodeImage(t *testing.T) {
 	comparisonOperator := widerthan
 	compareValue := 1
 
-	outputChannel := make(chan imageData)
+	outputChannel := make(chan ImageData)
 	defer close(outputChannel)
 
-	filePtr, reader, err := ReadFile(fullPath)
+	filePtr, reader, err := readFile(fullPath)
 	if err != nil {
 		t.Errorf("Reading file %v exited with error %q, expected none.\n", fullPath, err)
 		t.FailNow()
@@ -62,7 +62,7 @@ func TestDecodeImage(t *testing.T) {
 		}
 	}()
 
-	err = DecodeImage(fullPath, reader, outputChannel, comparisonOperator, compareValue)
+	err = decodeImage(fullPath, reader, outputChannel, comparisonOperator, compareValue)
 	if err != nil && !errors.Is(err, image.ErrFormat) {
 		t.Errorf("Expected error %q, received %q.\n", image.ErrFormat, err)
 		t.FailNow()

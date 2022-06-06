@@ -53,7 +53,7 @@ var (
 	SortBy    string
 	Unsorted  bool
 	Verbose   bool
-	Version   string = "0.2"
+	Version   = "0.2"
 )
 
 var rootCmd = &cobra.Command{
