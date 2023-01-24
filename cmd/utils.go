@@ -21,13 +21,54 @@ import (
 	"github.com/pkg/errors"
 )
 
+type sortDirection int
+
+const (
+	invalidSortDirection sortDirection = iota
+	ascending
+	descending
+)
+
+type sortKey int
+
+const (
+	invalidSortKey sortKey = iota
+	name
+	height
+	width
+)
+
+type compareType int
+
+const (
+	wider compareType = iota
+	narrower
+	taller
+	shorter
+)
+
+type Comparison struct {
+	operator compareType
+	value    int
+}
+
 type ImageData struct {
 	name   string
 	width  int
 	height int
 }
 
-func parseSortBy() (SortKey, error) {
+type Scans struct {
+	directories chan int
+	files       chan int
+}
+
+func (s *Scans) Close() {
+	close(s.directories)
+	close(s.files)
+}
+
+func parseSortBy() (sortKey, error) {
 	err := errors.New("invalid sort key provided. valid options: name, height, width")
 
 	switch {
@@ -42,7 +83,7 @@ func parseSortBy() (SortKey, error) {
 	}
 }
 
-func parseSortOrder() (SortDirection, error) {
+func parseSortOrder() (sortDirection, error) {
 	err := errors.New("invalid sort order provided. valid options: ascending, descending")
 
 	switch {
@@ -96,22 +137,23 @@ func sortOutput(outputs []ImageData) error {
 	return nil
 }
 
-func generateOutput(comparisonOperator CompareType, compareValue int, fullPath string, width int, height int) ImageData {
+func generateOutput(compare *Comparison, fullPath string, width int, height int) ImageData {
 	switch {
-	case OrEqual && comparisonOperator == widerthan && width >= compareValue,
-		OrEqual && comparisonOperator == narrowerthan && width <= compareValue,
-		OrEqual && comparisonOperator == tallerthan && height >= compareValue,
-		OrEqual && comparisonOperator == shorterthan && height <= compareValue,
-		comparisonOperator == narrowerthan && width < compareValue,
-		comparisonOperator == tallerthan && height > compareValue,
-		comparisonOperator == shorterthan && height < compareValue:
+	case OrEqual && compare.operator == wider && width >= compare.value,
+		OrEqual && compare.operator == narrower && width <= compare.value,
+		OrEqual && compare.operator == taller && height >= compare.value,
+		OrEqual && compare.operator == shorter && height <= compare.value,
+		compare.operator == wider && width > compare.value,
+		compare.operator == narrower && width < compare.value,
+		compare.operator == taller && height > compare.value,
+		compare.operator == shorter && height < compare.value:
 		return ImageData{name: fullPath, width: width, height: height}
 	default:
 		return ImageData{}
 	}
 }
 
-func decodeImage(fullPath string, reader io.Reader, outputChannel chan<- ImageData, comparisonOperator CompareType, compareValue int) error {
+func decodeImage(fullPath string, reader io.Reader, outputChannel chan<- ImageData, compare *Comparison) error {
 	myImage, _, err := image.DecodeConfig(reader)
 	if errors.Is(err, image.ErrFormat) {
 		return nil
@@ -122,7 +164,7 @@ func decodeImage(fullPath string, reader io.Reader, outputChannel chan<- ImageDa
 	width := myImage.Width
 	height := myImage.Height
 
-	output := generateOutput(comparisonOperator, compareValue, fullPath, width, height)
+	output := generateOutput(compare, fullPath, width, height)
 
 	if output.name != "" {
 		outputChannel <- output
@@ -142,13 +184,13 @@ func readFile(fullPath string) (*os.File, io.Reader, error) {
 	return file, reader, err
 }
 
-func scanFile(fullPath string, comparisonOperator CompareType, compareValue int, fileScans chan int, outputChannel chan<- ImageData, scanDirectoryWaitGroup *sync.WaitGroup) error {
+func scanFile(fullPath string, compare *Comparison, scans *Scans, outputChannel chan<- ImageData, wg *sync.WaitGroup) error {
 	defer func() {
-		<-fileScans
-		scanDirectoryWaitGroup.Done()
+		<-scans.files
+		wg.Done()
 	}()
 
-	fileScans <- 1
+	scans.files <- 1
 
 	filePtr, reader, err := readFile(fullPath)
 	if err != nil {
@@ -161,7 +203,7 @@ func scanFile(fullPath string, comparisonOperator CompareType, compareValue int,
 		}
 	}()
 
-	err = decodeImage(fullPath, reader, outputChannel, comparisonOperator, compareValue)
+	err = decodeImage(fullPath, reader, outputChannel, compare)
 	if err != nil {
 		return err
 	}
@@ -169,15 +211,15 @@ func scanFile(fullPath string, comparisonOperator CompareType, compareValue int,
 	return nil
 }
 
-func scanDirectory(directory string, comparisonOperator CompareType, compareValue int, directoryScans chan int, fileScans chan int, outputChannel chan ImageData, scanDirectoriesWaitGroup *sync.WaitGroup) error {
+func scanDirectory(directory string, compare *Comparison, scans *Scans, outputChannel chan ImageData, wg *sync.WaitGroup) error {
 	defer func() {
-		<-directoryScans
-		scanDirectoriesWaitGroup.Done()
+		<-scans.directories
+		wg.Done()
 	}()
 
-	directoryScans <- 1
+	scans.directories <- 1
 
-	var scanDirectoryWaitGroup sync.WaitGroup
+	var wg2 sync.WaitGroup
 
 	files, err := os.ReadDir(directory)
 	if err != nil {
@@ -189,37 +231,37 @@ func scanDirectory(directory string, comparisonOperator CompareType, compareValu
 	}
 
 	for _, file := range files {
-		scanDirectoryWaitGroup.Add(1)
+		wg2.Add(1)
 
 		fullPath := filepath.Join(directory, file.Name())
 		go func() {
-			err := scanFile(fullPath, comparisonOperator, compareValue, fileScans, outputChannel, &scanDirectoryWaitGroup)
+			err := scanFile(fullPath, compare, scans, outputChannel, &wg2)
 			if err != nil {
 				fmt.Println(err)
 			}
 		}()
 	}
 
-	scanDirectoryWaitGroup.Wait()
+	wg2.Wait()
 
 	return nil
 }
 
-func scanDirectories(directory string, comparisonOperator CompareType, compareValue int, directoryScans chan int, fileScans chan int, outputChannel chan ImageData, imageSizesWaitGroup *sync.WaitGroup) error {
-	defer imageSizesWaitGroup.Done()
+func scanDirectories(directory string, compare *Comparison, scans *Scans, outputChannel chan ImageData, wg *sync.WaitGroup) error {
+	defer wg.Done()
 
-	var ScanDirectoriesWaitGroup sync.WaitGroup
+	var wg2 sync.WaitGroup
 
 	if Recursive {
 		filesystem := os.DirFS(directory)
 
 		err := fs.WalkDir(filesystem, ".", func(path string, d fs.DirEntry, err error) error {
 			if d.IsDir() {
-				ScanDirectoriesWaitGroup.Add(1)
+				wg2.Add(1)
 
 				fullPath := filepath.Join(directory, path)
 				go func() {
-					err := scanDirectory(fullPath, comparisonOperator, compareValue, directoryScans, fileScans, outputChannel, &ScanDirectoriesWaitGroup)
+					err := scanDirectory(fullPath, compare, scans, outputChannel, &wg2)
 					if err != nil {
 						fmt.Println(err)
 					}
@@ -229,39 +271,46 @@ func scanDirectories(directory string, comparisonOperator CompareType, compareVa
 			return nil
 		})
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 	} else {
-		ScanDirectoriesWaitGroup.Add(1)
-		err := scanDirectory(directory, comparisonOperator, compareValue, directoryScans, fileScans, outputChannel, &ScanDirectoriesWaitGroup)
+		wg2.Add(1)
+		err := scanDirectory(directory, compare, scans, outputChannel, &wg2)
 		if err != nil {
 			return err
 		}
 	}
 
-	ScanDirectoriesWaitGroup.Wait()
+	wg2.Wait()
 
 	return nil
 }
 
-func ImageSizes(comparisonOperator CompareType, arguments []string) {
+func ImageSizes(compareOperator compareType, arguments []string) error {
 	compareValue, err := strconv.Atoi(arguments[0])
 	if err != nil {
-		fmt.Println(err)
+		return err
+	}
+
+	compare := &Comparison{
+		operator: compareOperator,
+		value:    compareValue,
 	}
 
 	outputChannel := make(chan ImageData)
 
-	var imageSizesWaitGroup sync.WaitGroup
+	var wg sync.WaitGroup
 
-	directoryScans := make(chan int, maxDirectoryScans)
-	fileScans := make(chan int, maxFileScans)
+	scans := &Scans{
+		directories: make(chan int, maxDirectoryScans),
+		files:       make(chan int, maxFileScans),
+	}
 
-	for dir := 1; dir < len(arguments); dir++ {
-		imageSizesWaitGroup.Add(1)
-		directory := arguments[dir]
+	for i := 1; i < len(arguments); i++ {
+		wg.Add(1)
+		directory := arguments[i]
 		go func() {
-			err := scanDirectories(directory, comparisonOperator, compareValue, directoryScans, fileScans, outputChannel, &imageSizesWaitGroup)
+			err := scanDirectories(directory, compare, scans, outputChannel, &wg)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -269,10 +318,9 @@ func ImageSizes(comparisonOperator CompareType, arguments []string) {
 	}
 
 	go func() {
-		imageSizesWaitGroup.Wait()
+		wg.Wait()
 		close(outputChannel)
-		close(directoryScans)
-		close(fileScans)
+		scans.Close()
 	}()
 
 	var outputs []ImageData
@@ -284,7 +332,7 @@ func ImageSizes(comparisonOperator CompareType, arguments []string) {
 	if !Unsorted {
 		err := sortOutput(outputs)
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 	}
 
@@ -307,4 +355,6 @@ func ImageSizes(comparisonOperator CompareType, arguments []string) {
 	}
 
 	fmt.Printf("")
+
+	return nil
 }

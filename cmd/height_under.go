@@ -5,6 +5,8 @@ Copyright © 2022 Seednode <seednode@seedno.de>
 package cmd
 
 import (
+	"log"
+
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +15,10 @@ var heightUnderCmd = &cobra.Command{
 	Short: "Filter images by height",
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		ImageSizes(shorterthan, args)
+		err := ImageSizes(shorter, args)
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 

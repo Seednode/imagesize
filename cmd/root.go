@@ -10,38 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type SortDirection int
-
-const (
-	invalidSortDirection SortDirection = iota
-	ascending
-	descending
-)
-
-type SortKey int
-
-const (
-	invalidSortKey SortKey = iota
-	name
-	height
-	width
-)
-
-type CompareType int
-
-const (
-	widerthan CompareType = iota
-	narrowerthan
-	tallerthan
-	shorterthan
-)
-
-type MaxConcurrency int
+type maxConcurrency int
 
 const (
 	// avoid hitting default open file descriptor limits (1024)
-	maxDirectoryScans MaxConcurrency = 32
-	maxFileScans      MaxConcurrency = 256
+	maxDirectoryScans maxConcurrency = 32
+	maxFileScans      maxConcurrency = 256
 )
 
 var (
@@ -53,7 +27,6 @@ var (
 	SortBy    string
 	Unsorted  bool
 	Verbose   bool
-	Version   = "0.2"
 )
 
 var rootCmd = &cobra.Command{
