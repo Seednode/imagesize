@@ -21,6 +21,6 @@ var versionCmd = &cobra.Command{
 	Short: "Print version",
 	Long:  "Print the version number of imagesize",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("roulette v" + Version)
+		fmt.Println("imagesize v" + Version)
 	},
 }
