@@ -13,7 +13,7 @@ var widthUnderCmd = &cobra.Command{
 	Short: "Filter images by width",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := ImageSizes(narrower, args)
+		err := imageSizes(narrower, args)
 		if err != nil {
 			return err
 		}

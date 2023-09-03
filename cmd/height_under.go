@@ -13,7 +13,7 @@ var heightUnderCmd = &cobra.Command{
 	Short: "Filter images by height",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := ImageSizes(shorter, args)
+		err := imageSizes(shorter, args)
 		if err != nil {
 			return err
 		}
