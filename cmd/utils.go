@@ -287,6 +287,12 @@ func scanDirectories(directory string, compare *Comparison, scans *Scans, output
 }
 
 func ImageSizes(compareOperator compareType, arguments []string) error {
+	if len(arguments) == 1 {
+		arguments = append(arguments, ".")
+
+		fmt.Println("No path specified. Defaulting to current directory.")
+	}
+
 	compareValue, err := strconv.Atoi(arguments[0])
 	if err != nil {
 		return err

@@ -5,20 +5,20 @@ Copyright © 2022 Seednode <seednode@seedno.de>
 package cmd
 
 import (
-	"log"
-
 	"github.com/spf13/cobra"
 )
 
 var heightOverCmd = &cobra.Command{
-	Use:   "over <size in pixels> <directory1> [directory2]...",
+	Use:   "over <size in pixels> [directory1] ...[directoryN]",
 	Short: "Filter images by height",
-	Args:  cobra.MinimumNArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	Args:  cobra.MinimumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
 		err := ImageSizes(taller, args)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
+
+		return nil
 	},
 }
 

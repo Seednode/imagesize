@@ -5,8 +5,6 @@ Copyright © 2022 Seednode <seednode@seedno.de>
 package cmd
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -36,11 +34,13 @@ var rootCmd = &cobra.Command{
 	Version:          Version,
 }
 
-func Execute() {
+func Execute() error {
 	err := rootCmd.Execute()
 	if err != nil {
-		os.Exit(1)
+		return err
 	}
+
+	return nil
 }
 
 func init() {
