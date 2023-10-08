@@ -10,13 +10,14 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
-	"io"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -24,16 +25,14 @@ import (
 type sortDirection int
 
 const (
-	invalidSortDirection sortDirection = iota
-	ascending
+	ascending sortDirection = iota
 	descending
 )
 
 type sortKey int
 
 const (
-	invalidSortKey sortKey = iota
-	name
+	name sortKey = iota
 	height
 	width
 )
@@ -58,54 +57,36 @@ type imageData struct {
 	height int
 }
 
-type scans struct {
-	directories chan int
-	files       chan int
-}
-
-func (s *scans) close() {
-	close(s.directories)
-	close(s.files)
-}
-
-func parseSortBy() (sortKey, error) {
-	err := errors.New("invalid sort key provided. valid options: name, height, width")
-
+func parseSortBy() sortKey {
 	switch {
-	case sortBy == "name":
-		return name, nil
-	case sortBy == "height":
-		return height, nil
-	case sortBy == "width":
-		return width, nil
+	case key == "name":
+		return name
+	case key == "height":
+		return height
+	case key == "width":
+		return width
 	default:
-		return invalidSortKey, err
+		fmt.Println(`Unknown key provided. Defaulting to "name".`)
+
+		return name
 	}
 }
 
-func parseSortOrder() (sortDirection, error) {
-	err := errors.New("invalid sort order provided. valid options: ascending, descending")
-
+func parseSortOrder() sortDirection {
 	switch {
-	case sortOrder == "ascending":
-		return ascending, nil
-	case sortOrder == "descending":
-		return descending, nil
+	case order == "ascending" || order == "asc":
+		return ascending
+	case order == "descending" || order == "desc":
+		return descending
 	default:
-		return invalidSortDirection, err
+		fmt.Println(`Unknown sort provided. Defaulting to "ascending".`)
+
+		return ascending
 	}
 }
 
-func sortOutput(outputs []imageData) error {
-	sortBy, err := parseSortBy()
-	if err != nil {
-		return err
-	}
-
-	sortOrder, err := parseSortOrder()
-	if err != nil {
-		return err
-	}
+func sortOutput(outputs []imageData) {
+	sortBy, sortOrder := parseSortBy(), parseSortOrder()
 
 	switch {
 	case sortOrder == ascending && sortBy == height:
@@ -133,160 +114,111 @@ func sortOutput(outputs []imageData) error {
 			return outputs[p].name > outputs[q].name
 		})
 	}
-
-	return nil
 }
 
-func generateOutput(compare *comparison, fullPath string, width int, height int) imageData {
-	switch {
-	case orEqual && compare.operator == wider && width >= compare.value,
-		orEqual && compare.operator == narrower && width <= compare.value,
-		orEqual && compare.operator == taller && height >= compare.value,
-		orEqual && compare.operator == shorter && height <= compare.value,
-		compare.operator == wider && width > compare.value,
-		compare.operator == narrower && width < compare.value,
-		compare.operator == taller && height > compare.value,
-		compare.operator == shorter && height < compare.value:
-		return imageData{name: fullPath, width: width, height: height}
-	default:
-		return imageData{}
-	}
-}
+func walkPath(path string, compare *comparison, scans chan int, results chan<- imageData) error {
+	scans <- 1
 
-func decodeImage(fullPath string, reader io.Reader, outputChannel chan<- imageData, compare *comparison) error {
-	myImage, _, err := image.DecodeConfig(reader)
-	if errors.Is(err, image.ErrFormat) {
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	width := myImage.Width
-	height := myImage.Height
-
-	output := generateOutput(compare, fullPath, width, height)
-
-	if output.name != "" {
-		outputChannel <- output
-	}
-
-	return nil
-}
-
-func readFile(fullPath string) (*os.File, io.Reader, error) {
-	file, err := os.Open(fullPath)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	reader := file
-
-	return file, reader, err
-}
-
-func scanFile(fullPath string, compare *comparison, scans *scans, outputChannel chan<- imageData, wg *sync.WaitGroup) error {
 	defer func() {
-		<-scans.files
-		wg.Done()
+		<-scans
 	}()
 
-	scans.files <- 1
+	errs := make(chan error)
+	done := make(chan bool, 1)
 
-	filePtr, reader, err := readFile(fullPath)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		err := filePtr.Close()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
-
-	err = decodeImage(fullPath, reader, outputChannel, compare)
+	nodes, err := os.ReadDir(path)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
+	var wg sync.WaitGroup
 
-func scanDirectory(directory string, compare *comparison, scans *scans, outputChannel chan imageData, wg *sync.WaitGroup) error {
-	defer func() {
-		<-scans.directories
-		wg.Done()
-	}()
+	for _, node := range nodes {
+		wg.Add(1)
 
-	scans.directories <- 1
+		go func(node fs.DirEntry) {
+			defer wg.Done()
 
-	var wg2 sync.WaitGroup
+			fullPath := filepath.Join(path, node.Name())
 
-	files, err := os.ReadDir(directory)
-	if err != nil {
-		return err
-	}
+			switch {
+			case node.IsDir() && recursive:
+				err := walkPath(fullPath, compare, scans, results)
+				if err != nil {
+					errs <- err
 
-	if len(files) == 0 {
-		return nil
-	}
+					return
+				}
+			case !node.IsDir():
+				scans <- 1
 
-	for _, file := range files {
-		wg2.Add(1)
+				defer func() {
+					<-scans
+				}()
 
-		fullPath := filepath.Join(directory, file.Name())
-		go func() {
-			err := scanFile(fullPath, compare, scans, outputChannel, &wg2)
-			if err != nil {
-				fmt.Println(err)
-			}
-		}()
-	}
+				file, err := os.Open(fullPath)
+				if err != nil {
+					errs <- err
 
-	wg2.Wait()
-
-	return nil
-}
-
-func scanDirectories(directory string, compare *comparison, scans *scans, outputChannel chan imageData, wg *sync.WaitGroup) error {
-	defer wg.Done()
-
-	var wg2 sync.WaitGroup
-
-	if recursive {
-		filesystem := os.DirFS(directory)
-
-		err := fs.WalkDir(filesystem, ".", func(path string, d fs.DirEntry, err error) error {
-			if d.IsDir() {
-				wg2.Add(1)
-
-				fullPath := filepath.Join(directory, path)
-				go func() {
-					err := scanDirectory(fullPath, compare, scans, outputChannel, &wg2)
+					return
+				}
+				defer func() {
+					err := file.Close()
 					if err != nil {
-						fmt.Println(err)
+						errs <- err
+
+						return
 					}
 				}()
-			}
 
-			return nil
-		})
-		if err != nil {
-			return err
-		}
-	} else {
-		wg2.Add(1)
-		err := scanDirectory(directory, compare, scans, outputChannel, &wg2)
-		if err != nil {
-			return err
-		}
+				decoded, _, err := image.DecodeConfig(file)
+				if errors.Is(err, image.ErrFormat) {
+					return
+				} else if err != nil {
+					errs <- err
+
+					return
+				}
+
+				switch {
+				case orEqual && compare.operator == wider && decoded.Width >= compare.value,
+					orEqual && compare.operator == narrower && decoded.Width <= compare.value,
+					orEqual && compare.operator == taller && decoded.Height >= compare.value,
+					orEqual && compare.operator == shorter && decoded.Height <= compare.value,
+					compare.operator == wider && decoded.Width > compare.value,
+					compare.operator == narrower && decoded.Width < compare.value,
+					compare.operator == taller && decoded.Height > compare.value,
+					compare.operator == shorter && decoded.Height < compare.value:
+					results <- imageData{name: fullPath, width: decoded.Width, height: decoded.Height}
+				}
+			}
+		}(node)
 	}
 
-	wg2.Wait()
+	go func() {
+		wg.Wait()
+
+		close(done)
+	}()
+
+Poll:
+	for {
+		select {
+		case err := <-errs:
+			return err
+		case <-done:
+			break Poll
+		}
+	}
 
 	return nil
 }
 
 func imageSizes(compareOperator compareType, arguments []string) error {
+	log.SetFlags(0)
+
+	startTime := time.Now()
+
 	if len(arguments) == 1 {
 		arguments = append(arguments, ".")
 
@@ -303,64 +235,79 @@ func imageSizes(compareOperator compareType, arguments []string) error {
 		value:    compareValue,
 	}
 
-	outputChannel := make(chan imageData)
+	results := make(chan imageData)
+	errs := make(chan error)
+	scanDone := make(chan bool)
+	resultsDone := make(chan bool)
+
+	var outputs []imageData
+
+	go func() {
+		for {
+			select {
+			case result := <-results:
+				outputs = append(outputs, result)
+			case <-scanDone:
+				close(resultsDone)
+
+				return
+			}
+		}
+	}()
 
 	var wg sync.WaitGroup
 
-	scans := &scans{
-		directories: make(chan int, maxDirectoryScans),
-		files:       make(chan int, maxFileScans),
-	}
+	scans := make(chan int, concurrency)
 
 	for i := 1; i < len(arguments); i++ {
 		wg.Add(1)
-		directory := arguments[i]
-		go func() {
-			err := scanDirectories(directory, compare, scans, outputChannel, &wg)
+
+		go func(path string) {
+			defer wg.Done()
+
+			err := walkPath(path, compare, scans, results)
 			if err != nil {
-				fmt.Println(err)
+				errs <- err
 			}
-		}()
+		}(arguments[i])
 	}
 
 	go func() {
 		wg.Wait()
-		close(outputChannel)
-		scans.close()
+
+		close(scanDone)
 	}()
 
-	var outputs []imageData
-
-	for r := range outputChannel {
-		outputs = append(outputs, r)
-	}
-
-	if !unsorted {
-		err := sortOutput(outputs)
-		if err != nil {
+Poll:
+	for {
+		select {
+		case err := <-errs:
 			return err
+		case <-resultsDone:
+			break Poll
 		}
 	}
 
-	switch {
-	case !quiet && verbose:
-		for o := 0; o < len(outputs); o++ {
-			i := outputs[o]
-			fmt.Printf("%v (%vx%v)\n", i.name, i.width, i.height)
-		}
-	case !quiet && !verbose:
-		for o := 0; o < len(outputs); o++ {
-			i := outputs[o]
-			fmt.Printf("%v\n", i.name)
-		}
-	default:
-	}
+	sortOutput(outputs)
 
-	if count {
-		fmt.Printf("\n%v file(s) matched.\n", len(outputs))
-	}
+	if verbose {
+		for _, output := range outputs {
+			fmt.Printf("%v (%vx%v)\n", output.name, output.width, output.height)
+		}
 
-	fmt.Printf("")
+		if len(outputs) != 0 {
+			fmt.Println("")
+		}
+
+		fmt.Printf("%d file(s) matched in %v.\n",
+			len(outputs),
+			time.Since(startTime),
+		)
+	} else {
+		for _, output := range outputs {
+			fmt.Printf("%v\n", output.name)
+		}
+	}
 
 	return nil
 }

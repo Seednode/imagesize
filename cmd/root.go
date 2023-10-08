@@ -8,26 +8,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type maxConcurrency int
-
 const (
-	// avoid hitting default open file descriptor limits (1024)
-	maxDirectoryScans maxConcurrency = 32
-	maxFileScans      maxConcurrency = 256
-
-	Version string = "0.5.0"
+	Version string = "0.6.0"
 )
 
 var (
-	count     bool
-	orEqual   bool
-	quiet     bool
-	recursive bool
-	sortOrder string
-	sortBy    string
-	unsorted  bool
-	verbose   bool
-	version   bool
+	concurrency int
+	orEqual     bool
+	recursive   bool
+	key         string
+	order       string
+	verbose     bool
+	version     bool
 )
 
 var rootCmd = &cobra.Command{
@@ -47,14 +39,12 @@ func Execute() error {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVarP(&count, "count", "c", false, "display number of matching files")
-	rootCmd.PersistentFlags().BoolVar(&orEqual, "or-equal", false, "also match files equal to the specified dimension")
-	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "silence filename output")
+	rootCmd.PersistentFlags().IntVarP(&concurrency, "max-concurrency", "c", 4096, "maximum number of paths to scan at once")
+	rootCmd.PersistentFlags().BoolVarP(&orEqual, "or-equal", "e", false, "also match files equal to the specified dimension")
 	rootCmd.PersistentFlags().BoolVarP(&recursive, "recursive", "r", false, "include subdirectories")
-	rootCmd.PersistentFlags().StringVar(&sortBy, "sort-by", "name", "sort output by the specified key")
-	rootCmd.PersistentFlags().StringVar(&sortOrder, "sort-order", "ascending", "sort output in the specified direction")
-	rootCmd.PersistentFlags().BoolVarP(&unsorted, "unsorted", "u", false, "do not sort output")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "display image dimensions in output")
+	rootCmd.PersistentFlags().StringVarP(&key, "sort-key", "k", "name", "sort output by the specified key (height, width, name)")
+	rootCmd.PersistentFlags().StringVarP(&order, "sort-order", "o", "ascending", "sort output in the specified direction (asc[ending], desc[ending])")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "display image dimensions and total matched file count")
 	rootCmd.PersistentFlags().BoolVarP(&version, "version", "V", false, "display version and exit")
 
 	rootCmd.SilenceErrors = true
