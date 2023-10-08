@@ -5,6 +5,7 @@ Copyright © 2022 Seednode <seednode@seedno.de>
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	_ "image/gif"
@@ -18,8 +19,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 type sortDirection int
@@ -79,7 +78,7 @@ func parseSortOrder() sortDirection {
 	case order == "descending" || order == "desc":
 		return descending
 	default:
-		fmt.Println(`Unknown sort provided. Defaulting to "ascending".`)
+		fmt.Println(`Unknown order provided. Defaulting to "ascending".`)
 
 		return ascending
 	}
