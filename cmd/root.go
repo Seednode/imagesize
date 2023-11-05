@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Version string = "0.6.1"
+	ReleaseVersion string = "0.7.0"
 )
 
 var (
@@ -26,7 +26,6 @@ var rootCmd = &cobra.Command{
 	Use:              "imagesize",
 	Short:            "displays images matching the specified constraints",
 	TraverseChildren: true,
-	Version:          Version,
 }
 
 func Execute() error {
@@ -47,11 +46,15 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "display image dimensions and total matched file count")
 	rootCmd.PersistentFlags().BoolVarP(&version, "version", "V", false, "display version and exit")
 
+	rootCmd.Flags().SetInterspersed(true)
+
+	rootCmd.CompletionOptions.HiddenDefaultCmd = true
+
 	rootCmd.SilenceErrors = true
 	rootCmd.SetHelpCommand(&cobra.Command{
 		Hidden: true,
 	})
 
 	rootCmd.SetVersionTemplate("imagesize v{{.Version}}\n")
-	rootCmd.Version = Version
+	rootCmd.Version = ReleaseVersion
 }
