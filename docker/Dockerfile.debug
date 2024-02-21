@@ -6,9 +6,6 @@ ARG TAG
 FROM --platform=$BUILDPLATFORM golang:$TAG AS build
 ARG app
 
-# install dependencies
-RUN apk add --update-cache upx
-
 # copy source files into the container
 COPY . /src/$app/
 
@@ -18,8 +15,7 @@ ARG TARGETOS TARGETARCH
 RUN CGO_ENABLED=0 \
     GOOS=$TARGETOS \
     GOARCH=$TARGETARCH \
-    go build -trimpath -ldflags "-s -w" -o $app \
-    && upx --best --lzma $app \
+    go build -trimpath -o $app \
     && chmod 500 $app
 
 # set up final stage
@@ -29,12 +25,11 @@ ARG app
 # copy in user info
 COPY --chown=root:root --chmod=0400 docker/passwd /etc/passwd
 
-# run as nonroot
-USER nonroot
+# run as root for debug
+USER root
 
 # copy in binary
 COPY --from=build --chown=root:root --chmod=0005 /src/$app/$app /$app
 
-# run application
-ENTRYPOINT ["/imagesize"]
-CMD ["-r","height","over","512","/data"]
+# launch a shell by default
+ENTRYPOINT ["/bin/ash"]
