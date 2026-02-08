@@ -11,6 +11,7 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -19,6 +20,14 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	avif "github.com/gen2brain/avif"
+	heic "github.com/gen2brain/heic"
+	jpegxl "github.com/gen2brain/jpegxl"
+
+	_ "golang.org/x/image/bmp"
+	_ "golang.org/x/image/vp8l"
+	_ "golang.org/x/image/webp"
 )
 
 type sortDirection int
@@ -54,6 +63,47 @@ type imageData struct {
 	name   string
 	width  int
 	height int
+}
+
+func imageDimensions(path string) (w, h int, ok bool, err error) {
+	f, err := os.Open(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return 0, 0, false, nil
+		}
+		return 0, 0, false, err
+	}
+	defer f.Close()
+
+	cfg, _, err := image.DecodeConfig(f)
+	if err == nil {
+		return cfg.Width, cfg.Height, true, nil
+	}
+
+	if errors.Is(err, image.ErrFormat) {
+		if _, seekErr := f.Seek(0, io.SeekStart); seekErr != nil {
+			return 0, 0, false, seekErr
+		}
+
+		jxlCfg, err := jpegxl.DecodeConfig(f)
+		if err == nil {
+			return jxlCfg.Width, jxlCfg.Height, true, nil
+		}
+
+		avifCfg, err := avif.DecodeConfig(f)
+		if err == nil {
+			return avifCfg.Width, avifCfg.Height, true, nil
+		}
+
+		heicCfg, err := heic.DecodeConfig(f)
+		if err == nil {
+			return heicCfg.Width, heicCfg.Height, true, nil
+		}
+
+		return 0, 0, false, nil
+	}
+
+	return 0, 0, false, err
 }
 
 func parseSortBy() sortKey {
@@ -155,40 +205,23 @@ func walkPath(path string, compare *comparison, scans chan int, results chan<- i
 					<-scans
 				}()
 
-				file, err := os.Open(fullPath)
-				if err != nil {
-					errs <- err
-
-					return
-				}
-				defer func() {
-					err := file.Close()
-					if err != nil {
-						errs <- err
-
-						return
-					}
-				}()
-
-				decoded, _, err := image.DecodeConfig(file)
-				if errors.Is(err, image.ErrFormat) {
-					return
-				} else if err != nil {
+				width, height, ok, err := imageDimensions(fullPath)
+				if err != nil || !ok {
 					errs <- err
 
 					return
 				}
 
 				switch {
-				case orEqual && compare.operator == wider && decoded.Width >= compare.value,
-					orEqual && compare.operator == narrower && decoded.Width <= compare.value,
-					orEqual && compare.operator == taller && decoded.Height >= compare.value,
-					orEqual && compare.operator == shorter && decoded.Height <= compare.value,
-					compare.operator == wider && decoded.Width > compare.value,
-					compare.operator == narrower && decoded.Width < compare.value,
-					compare.operator == taller && decoded.Height > compare.value,
-					compare.operator == shorter && decoded.Height < compare.value:
-					results <- imageData{name: fullPath, width: decoded.Width, height: decoded.Height}
+				case orEqual && compare.operator == wider && width >= compare.value,
+					orEqual && compare.operator == narrower && width <= compare.value,
+					orEqual && compare.operator == taller && height >= compare.value,
+					orEqual && compare.operator == shorter && height <= compare.value,
+					compare.operator == wider && width > compare.value,
+					compare.operator == narrower && width < compare.value,
+					compare.operator == taller && height > compare.value,
+					compare.operator == shorter && height < compare.value:
+					results <- imageData{name: fullPath, width: width, height: height}
 				}
 			}
 		}(node)
