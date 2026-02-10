@@ -19,7 +19,7 @@ RUN CGO_ENABLED=0 \
     GOOS=$TARGETOS \
     GOARCH=$TARGETARCH \
     GOEXPERIMENT=goroutineleakprofile \
-    go build -trimpath -ldflags "-s -w" -tags "netgo nodynamic timetzdata" -o $app \
+    go build -trimpath -ldflags "-s -w" -tags "netgo timetzdata" -o $app \
     && upx --best --lzma $app \
     && chmod 500 $app
 
