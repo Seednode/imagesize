@@ -7,7 +7,7 @@ require (
 	github.com/gen2brain/heic v0.4.9
 	github.com/gen2brain/jpegxl v0.4.5
 	github.com/spf13/cobra v1.10.2
-	golang.org/x/image v0.36.0
+	golang.org/x/image v0.37.0
 )
 
 require (
