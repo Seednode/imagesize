@@ -7,7 +7,7 @@ require (
 	github.com/gen2brain/heic v0.4.9
 	github.com/gen2brain/jpegxl v0.4.5
 	github.com/spf13/cobra v1.10.2
-	golang.org/x/image v0.40.0
+	golang.org/x/image v0.41.0
 )
 
 require (
@@ -15,5 +15,5 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/tetratelabs/wazero v1.11.0 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 )
