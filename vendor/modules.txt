@@ -1,4 +1,4 @@
-# github.com/ebitengine/purego v0.10.0
+# github.com/ebitengine/purego v0.10.1
 ## explicit; go 1.18
 github.com/ebitengine/purego
 github.com/ebitengine/purego/internal/cgo
