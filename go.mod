@@ -3,11 +3,11 @@ module github.com/Seednode/imagesize
 go 1.26
 
 require (
-	github.com/gen2brain/avif v0.4.4
-	github.com/gen2brain/heic v0.4.9
-	github.com/gen2brain/jpegxl v0.4.5
+	github.com/gen2brain/avif v0.5.1
+	github.com/gen2brain/heic v0.5.0
+	github.com/gen2brain/jpegxl v0.5.1
 	github.com/spf13/cobra v1.10.2
-	golang.org/x/image v0.42.0
+	golang.org/x/image v0.43.0
 )
 
 require (
