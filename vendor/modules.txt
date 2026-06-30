@@ -5,13 +5,13 @@ github.com/ebitengine/purego/internal/cgo
 github.com/ebitengine/purego/internal/fakecgo
 github.com/ebitengine/purego/internal/strings
 github.com/ebitengine/purego/internal/xreflect
-# github.com/gen2brain/avif v0.5.1
+# github.com/gen2brain/avif v0.5.2
 ## explicit; go 1.25.0
 github.com/gen2brain/avif
-# github.com/gen2brain/heic v0.5.0
-## explicit; go 1.23
+# github.com/gen2brain/heic v0.6.1
+## explicit; go 1.25.0
 github.com/gen2brain/heic
-# github.com/gen2brain/jpegxl v0.5.1
+# github.com/gen2brain/jpegxl v0.5.2
 ## explicit; go 1.25.0
 github.com/gen2brain/jpegxl
 # github.com/inconshreveable/mousetrap v1.1.0
