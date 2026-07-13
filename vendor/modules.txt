@@ -1,3 +1,8 @@
+# github.com/andybalholm/brotli v1.2.2
+## explicit; go 1.22
+github.com/andybalholm/brotli
+github.com/andybalholm/brotli/flate
+github.com/andybalholm/brotli/matchfinder
 # github.com/ebitengine/purego v0.10.1
 ## explicit; go 1.18
 github.com/ebitengine/purego
@@ -5,13 +10,13 @@ github.com/ebitengine/purego/internal/cgo
 github.com/ebitengine/purego/internal/fakecgo
 github.com/ebitengine/purego/internal/strings
 github.com/ebitengine/purego/internal/xreflect
-# github.com/gen2brain/avif v0.5.2
+# github.com/gen2brain/avif v0.6.0
 ## explicit; go 1.25.0
 github.com/gen2brain/avif
-# github.com/gen2brain/heic v0.6.1
+# github.com/gen2brain/heic v0.7.1
 ## explicit; go 1.25.0
 github.com/gen2brain/heic
-# github.com/gen2brain/jpegxl v0.5.2
+# github.com/gen2brain/jpegxl v0.6.0
 ## explicit; go 1.25.0
 github.com/gen2brain/jpegxl
 # github.com/inconshreveable/mousetrap v1.1.0
@@ -59,7 +64,7 @@ github.com/tetratelabs/wazero/internal/wasm/binary
 github.com/tetratelabs/wazero/internal/wasmdebug
 github.com/tetratelabs/wazero/internal/wasmruntime
 github.com/tetratelabs/wazero/sys
-# golang.org/x/image v0.43.0
+# golang.org/x/image v0.44.0
 ## explicit; go 1.25.0
 golang.org/x/image/bmp
 golang.org/x/image/internal/safemath
@@ -67,7 +72,7 @@ golang.org/x/image/riff
 golang.org/x/image/vp8
 golang.org/x/image/vp8l
 golang.org/x/image/webp
-# golang.org/x/sys v0.46.0
+# golang.org/x/sys v0.47.0
 ## explicit; go 1.25.0
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
