@@ -17,15 +17,6 @@ github.com/gen2brain/heic
 # github.com/gen2brain/jpegxl v0.6.0
 ## explicit; go 1.25.0
 github.com/gen2brain/jpegxl
-# github.com/inconshreveable/mousetrap v1.1.0
-## explicit; go 1.18
-github.com/inconshreveable/mousetrap
-# github.com/spf13/cobra v1.10.2
-## explicit; go 1.15
-github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.10
-## explicit; go 1.12
-github.com/spf13/pflag
 # github.com/tetratelabs/wazero v1.12.0
 ## explicit; go 1.25.0
 github.com/tetratelabs/wazero
