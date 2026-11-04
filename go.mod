@@ -11,7 +11,7 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.2.7 // indirect
-	github.com/ebitengine/purego v0.11.2 // indirect
+	github.com/ebitengine/purego v0.11.3 // indirect
 	github.com/tetratelabs/wazero v1.12.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 )
