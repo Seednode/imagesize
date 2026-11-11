@@ -1,4 +1,4 @@
-# github.com/andybalholm/brotli v1.2.8
+# github.com/andybalholm/brotli v1.3.0
 ## explicit; go 1.22
 github.com/andybalholm/brotli
 github.com/andybalholm/brotli/matchfinder
@@ -53,7 +53,7 @@ github.com/tetratelabs/wazero/internal/wasm/binary
 github.com/tetratelabs/wazero/internal/wasmdebug
 github.com/tetratelabs/wazero/internal/wasmruntime
 github.com/tetratelabs/wazero/sys
-# golang.org/x/image v0.47.0
+# golang.org/x/image v0.48.0
 ## explicit; go 1.26.0
 golang.org/x/image/bmp
 golang.org/x/image/internal/safemath
@@ -61,7 +61,7 @@ golang.org/x/image/riff
 golang.org/x/image/vp8
 golang.org/x/image/vp8l
 golang.org/x/image/webp
-# golang.org/x/sys v0.49.0
+# golang.org/x/sys v0.50.0
 ## explicit; go 1.26.0
 golang.org/x/sys/cpu
 golang.org/x/sys/unix

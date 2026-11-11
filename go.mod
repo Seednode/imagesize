@@ -6,12 +6,12 @@ require (
 	github.com/gen2brain/avif v0.6.0
 	github.com/gen2brain/heic v0.7.2
 	github.com/gen2brain/jpegxl v0.6.0
-	golang.org/x/image v0.47.0
+	golang.org/x/image v0.48.0
 )
 
 require (
-	github.com/andybalholm/brotli v1.2.8 // indirect
+	github.com/andybalholm/brotli v1.3.0 // indirect
 	github.com/ebitengine/purego v0.11.3 // indirect
 	github.com/tetratelabs/wazero v1.12.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 )
